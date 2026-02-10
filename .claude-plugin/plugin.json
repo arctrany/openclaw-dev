@@ -1,0 +1,9 @@
+{
+  "name": "openclaw-dev",
+  "version": "2.0.0",
+  "description": "Complete OpenClaw development toolkit. Create, validate, and deploy OpenClaw plugins, skills, and agents with guided workflows, comprehensive documentation, and automated validation.",
+  "author": {
+    "name": "Hao Wu"
+  },
+  "keywords": ["openclaw", "clawdbot", "skill", "development", "agent", "plugin", "toolkit", "scaffolding"]
+}

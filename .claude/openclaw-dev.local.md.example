@@ -1,0 +1,74 @@
+---
+openclaw:
+  workspace_path: "~/.openclaw/workspaces"
+  default_agent: "developer"
+
+plugin_defaults:
+  author_name: "Your Name"
+  author_email: "your.email@example.com"
+
+deployment:
+  openclaw_plugins_dir: "~/.openclaw/plugins"
+  claude_code_plugins_dir: "~/.claude/plugins"
+
+testing:
+  auto_validate: true
+  run_verification: true
+---
+
+# OpenClaw-Dev Local Configuration
+
+This file contains local configuration for the openclaw-dev plugin. Copy this to `.claude/openclaw-dev.local.md` and customize for your environment.
+
+## Configuration Fields
+
+### openclaw.workspace_path
+Path to OpenClaw workspaces directory. Used when deploying skills to agent workspaces.
+
+Default: `~/.openclaw/workspaces`
+
+### openclaw.default_agent
+Default agent ID to use when creating skills. Will be prompted if not set.
+
+Example: `developer`, `analyst`, `researcher`
+
+### plugin_defaults.author_name
+Your name to use in plugin.json manifests by default.
+
+### plugin_defaults.author_email
+Your email to use in plugin.json manifests by default.
+
+### deployment.openclaw_plugins_dir
+Where to deploy plugins for OpenClaw use.
+
+Default: `~/.openclaw/plugins`
+
+### deployment.claude_code_plugins_dir
+Where to deploy plugins for Claude Code use.
+
+Default: `~/.claude/plugins`
+
+### testing.auto_validate
+Automatically run validation after creating plugins/skills/agents.
+
+Default: `true`
+
+### testing.run_verification
+Run verification scripts after deployment.
+
+Default: `true`
+
+## Usage
+
+This configuration is read by openclaw-dev commands:
+- `/scaffold-plugin` - Uses plugin_defaults for author info
+- `/create-skill` - Uses openclaw.workspace_path and default_agent
+- `/deploy-skill` - Uses deployment paths
+- `/validate-plugin` - Uses testing.auto_validate setting
+
+## Notes
+
+- This file should be in `.gitignore` (contains local paths)
+- Settings are optional - commands will prompt if not configured
+- Paths support tilde expansion (`~` for home directory)
+- YAML frontmatter format for easy parsing
