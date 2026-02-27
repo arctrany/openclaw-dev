@@ -1,5 +1,9 @@
 ---
+name: skill-reviewer
 description: "OpenClaw skill reviewer agent. Use this agent to review an OpenClaw SKILL.md for quality, correctness, and best practices compliance. Checks frontmatter, description effectiveness, body structure, progressive disclosure, and context efficiency."
+model: inherit
+color: cyan
+tools: ["Read", "Grep", "Glob"]
 ---
 
 # OpenClaw Skill Reviewer

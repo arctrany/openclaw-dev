@@ -1,181 +1,111 @@
-# OpenClaw Skill Development - Quick Reference
+# Skill 开发速查表
 
-Quick reference for common patterns, commands, and checklists.
+## 最小 SKILL.md 模板
 
-## Minimal Viable SKILL.md
-
-```yaml
+```markdown
 ---
-name: skill-name
-description: "This skill should be used when the user asks to 'trigger phrase 1', 'trigger phrase 2', 'trigger phrase 3'..."
+name: my-skill
+description: "Use this skill when the user asks to 'trigger phrase 1', 'trigger phrase 2', or needs guidance on [topic]. Covers [what it does]."
 metadata: {"clawdbot":{"always":false,"emoji":"🔧"}}
 ---
 
-# Skill Title
+# My Skill
 
-Instructions in imperative form...
+## 核心流程
+
+1. [Step 1]
+2. [Step 2]
+3. [Step 3]
+
+## 规则
+
+- [Rule 1]
+- [Rule 2]
 ```
 
-## Common Metadata Patterns
+## Frontmatter 速查
 
-```yaml
-# Basic skill
-metadata: {"clawdbot":{"always":false,"emoji":"🔧"}}
+| 字段 | 必填 | 说明 |
+|------|------|------|
+| `name` | ✅ | 必须匹配目录名 (kebab-case) |
+| `description` | ✅ | 触发机制 — 越详细越好 |
+| `metadata` | 否 | `clawdbot.always`, `emoji`, `requires` |
+| `user-invocable` | 否 | `/skill-name` 命令触发 |
+| `version` | 否 | semver 版本号 |
 
-# With dependencies
-metadata: {"clawdbot":{"always":false,"emoji":"🔧","requires":{"bins":["jq","python3"]}}}
+## Metadata 常见模式
 
-# With environment variables
-metadata: {"clawdbot":{"always":false,"emoji":"🔧","requires":{"env":["API_KEY"]}}}
+```json
+// 始终加载
+{"clawdbot":{"always":true,"emoji":"📋"}}
 
-# OS-specific
-metadata: {"clawdbot":{"always":false,"emoji":"🔧","os":["darwin","linux"]}}
+// 需要二进制
+{"clawdbot":{"always":false,"emoji":"🔧","requires":{"bins":["jq","curl"]}}}
 
-# User-invocable
-user-invocable: true
+// 需要环境变量
+{"clawdbot":{"always":false,"emoji":"🔑","primaryEnv":"API_KEY"}}
+
+// macOS only
+{"clawdbot":{"always":false,"emoji":"🍎","os":["darwin"]}}
+
+// 需要配置
+{"clawdbot":{"always":false,"requires":{"config":["browser.enabled"]}}}
 ```
 
-## Validation Checklist
-
-Before deploying a skill:
-
-- [ ] `name` matches directory name exactly
-- [ ] `description` uses third-person format ("This skill should be used when...")
-- [ ] `description` includes 3+ specific trigger phrases in quotes
-- [ ] `metadata` is valid JSON (test: `echo '<metadata>' | jq .`)
-- [ ] Body uses imperative voice ("Run X", not "You should run X")
-- [ ] Under 500 lines (or uses `references/` for progressive disclosure)
-- [ ] No hardcoded paths (use dynamic resolution from `openclaw.json`)
-- [ ] Run `./scripts/validate-skill.sh <skill-dir>` - passes
-
-## Deployment Commands
-
-### Local Deployment
+## 验证清单
 
 ```bash
-# Deploy to local agent
-./scripts/deploy-skill.sh ./skill-name agent-id
+# 1. SKILL.md 存在
+test -f skill-dir/SKILL.md
 
-# Verify loaded
-./scripts/verify-skill-loaded.sh -a agent-id skill-name
+# 2. name 匹配目录名
+grep "^name:" skill-dir/SKILL.md
+
+# 3. description 够长 (>30 chars)
+grep "^description:" skill-dir/SKILL.md | wc -c
+
+# 4. metadata JSON 有效
+grep "^metadata:" skill-dir/SKILL.md | sed 's/metadata: *//' | jq .
+
+# 5. 行数 <500
+wc -l < skill-dir/SKILL.md
+
+# 自动验证
+bash scripts/validate-skill.sh skill-dir/
 ```
 
-### Remote Deployment
+## 部署命令
 
 ```bash
-# Deploy to remote agent via rsync
-./scripts/deploy-skill.sh -r user@remote-host ./skill-name agent-id
+# 查找 workspace
+WORKSPACE=$(jq -r '.agents.list[] | select(.id=="<agent>") | .workspace' ~/.openclaw/openclaw.json)
+WORKSPACE=$(eval echo "$WORKSPACE")
 
-# Deploy to remote agent via git
-./scripts/deploy-skill.sh -m git -r user@remote-host skill-name agent-id
+# 部署到 workspace
+cp -r my-skill/ "$WORKSPACE/skills/my-skill/"
 
-# Verify on remote
-./scripts/verify-skill-loaded.sh -r user@remote-host -a agent-id skill-name
+# 远程部署
+rsync -avz my-skill/ user@remote:~/.openclaw/workspace/skills/my-skill/
+
+# 发 /new 加载
+# 验证
+cat ~/.openclaw/agents/<id>/sessions/sessions.json | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+for k, v in data.items():
+    prompt = v.get('skillsSnapshot', {}).get('prompt', '')
+    if 'my-skill' in prompt:
+        print(f'FOUND in {k}')
+"
 ```
 
-### Multi-Agent Deployment
+## 故障排查
 
-```bash
-# Deploy to all agents
-for agent in $(jq -r '.agents.list[].id' ~/.openclaw/openclaw.json); do
-  ./scripts/deploy-skill.sh skill-name $agent
-done
-```
-
-## Troubleshooting One-Liners
-
-```bash
-# Find agent workspace path
-jq -r '.agents.list[] | select(.id=="<agent-id>") | .workspace' ~/.openclaw/openclaw.json
-
-# Check if skill file exists (local)
-ls -la ~/.openclaw/workspace-<agent-id>/skills/<skill-name>/SKILL.md
-
-# Check if skill file exists (remote)
-ssh user@remote-host "ls -la ~/.openclaw/workspace-<agent-id>/skills/<skill-name>/SKILL.md"
-
-# Check if skill loaded in session
-cat ~/.openclaw/agents/<agent-id>/sessions/sessions.json | jq -r '.["agent:<agent-id>:main"].skillsSnapshot.prompt' | grep <skill-name>
-
-# Validate metadata JSON
-head -20 SKILL.md | grep "^metadata:" | sed 's/metadata: *//' | jq .
-
-# Count skill lines
-wc -l SKILL.md
-
-# Find hardcoded paths
-grep -r "^/" scripts/ references/ examples/
-
-# Restart gateway (after config changes)
-pkill -TERM openclaw-gateway
-```
-
-## Component Organization Guidelines
-
-### Put in `scripts/`
-- Validation utilities
-- Deployment automation
-- Testing helpers
-- Reusable code that would be rewritten each time
-
-### Put in `references/`
-- Detailed patterns and techniques
-- Troubleshooting guides
-- Advanced configurations
-- Long documentation (>2,000 words)
-
-### Put in `examples/`
-- Complete, working SKILL.md examples
-- Template files users can copy
-- Real-world implementations
-
-### Put in SKILL.md
-- Core workflow (5 phases)
-- Essential instructions
-- Pointers to scripts/references/examples
-- Keep under 500 lines
-
-## Script Usage Examples
-
-### Validation Script
-
-```bash
-# Local validation
-./scripts/validate-skill.sh /path/to/skill-name
-
-# Validate in agent workspace
-./scripts/validate-skill.sh -a momiji skill-name
-
-# Validate on remote agent
-./scripts/validate-skill.sh -r user@remote-host -a momiji skill-name
-```
-
-### Deployment Script
-
-```bash
-# Deploy locally
-./scripts/deploy-skill.sh ./my-skill momiji
-
-# Deploy to remote agent (rsync)
-./scripts/deploy-skill.sh -r user@remote-host ./my-skill momiji
-
-# Deploy to remote agent (git)
-./scripts/deploy-skill.sh -m git -r user@remote-host my-skill momiji
-```
-
-### Verification Script
-
-```bash
-# Verify local agent
-./scripts/verify-skill-loaded.sh -a momiji skill-name
-
-# Verify remote agent
-./scripts/verify-skill-loaded.sh -r user@remote-host -a momiji skill-name
-```
-
-## Key Script Features
-
-- ✅ No hardcoded paths - all paths resolved dynamically
-- ✅ Support for remote OpenClaw agents via SSH
-- ✅ 3 deployment methods: rsync/scp/git
-- ✅ Comprehensive validation and verification
+| 问题 | 一行修复 |
+|------|---------|
+| Skill 不加载 | 检查 `agents.list[].workspace` 路径 |
+| Skill 不触发 | 增加 description 中的触发短语 |
+| Always-on 浪费 token | 改 `always: false`，优化 description |
+| 太长 | 移到 `references/`，body 保持 <500 行 |
+| Metadata 无效 | `echo '<meta>' \| jq .` 验证 |
+| 远程部署失败 | `rsync -avz` 确认路径正确 |

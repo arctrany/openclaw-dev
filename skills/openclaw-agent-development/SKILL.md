@@ -1,670 +1,344 @@
 ---
 name: openclaw-agent-development
-description: "This skill should be used when the user asks to create an OpenClaw agent, build agent for OpenClaw, configure agent behavior, or understand agent development. Examples: 'create an agent to validate code', 'build a testing agent', 'how do I configure agent frontmatter', 'write a system prompt for an agent', 'what tools should my agent have', 'OpenClaw agent best practices'. Covers agent structure, frontmatter configuration, system prompt design, triggering patterns, and tool restrictions."
+description: "Use this skill when asked to create an OpenClaw agent, configure multi-agent routing, set up agent bindings, design agent workspaces, configure per-agent security/sandbox/tools, understand agent delegation (sessions_spawn), or troubleshoot agent routing. Covers the real OpenClaw agent system: agents.list[] config in openclaw.json, bindings, workspace isolation, SOUL.md/AGENTS.md/USER.md persona files, per-agent model/tools/sandbox, and inter-agent communication."
 metadata: {"clawdbot":{"always":false,"emoji":"🤖"}}
-version: 1.0.0
+version: 2.0.0
 ---
 
 # OpenClaw Agent Development
 
-## Overview
+## 什么是 Agent？
 
-Agents in OpenClaw are autonomous subprocesses that handle complex, multi-step tasks independently. Understanding agent structure, configuration, and system prompt design enables creating powerful autonomous capabilities for OpenClaw deployments.
+Agent 是 OpenClaw Gateway 中一个**完全隔离的 AI 大脑**，拥有独立的：
 
-**Key concepts:**
-- Agents are autonomous workers, commands are user-initiated actions
-- Markdown file format with YAML frontmatter configuration
-- Triggering via description field with concrete examples
-- System prompt defines agent behavior and expertise
-- Model selection and tool restriction capabilities
+| 资源 | 路径 |
+|------|------|
+| **Workspace** | `~/.openclaw/workspace-<agentId>/` (SOUL.md, AGENTS.md, USER.md, skills/) |
+| **State** | `~/.openclaw/agents/<agentId>/agent/` (auth profiles, model registry) |
+| **Sessions** | `~/.openclaw/agents/<agentId>/sessions/` (conversation history) |
 
-## Agent Architecture
+Gateway 可托管**单 agent**（默认 `main`）或**多 agent** 并行。
 
-### What is an OpenClaw Agent?
+## Agent 配置
 
-An agent is a specialized subprocess configured with:
-- **Identity**: Name and role description
-- **Triggering conditions**: When the agent should activate
-- **Capabilities**: Tools and model access
-- **Behavior**: System prompt defining how it works
-- **Presentation**: Visual color for UI identification
+Agent 在 `~/.openclaw/openclaw.json` → `agents.list[]` 中定义：
 
-**Use agents for**:
-- Multi-step autonomous workflows
-- Specialized analysis tasks
-- Code generation and review
-- Validation and quality checks
-- Complex decision-making processes
+### 最小配置
 
-**Use commands for**:
-- User-initiated one-time actions
-- Quick utility functions
-- Interactive workflows with user input
-
-## Agent File Structure
-
-### Complete Format
-
-```markdown
----
-name: agent-identifier
-description: Use this agent when [triggering conditions]. Examples:
-
-<example>
-Context: [Situation description]
-user: "[User request]"
-assistant: "[How assistant should respond and use this agent]"
-<commentary>
-[Why this agent should be triggered]
-</commentary>
-</example>
-
-<example>
-[Additional example...]
-</example>
-
-model: inherit
-color: blue
-tools: ["Read", "Write", "Grep", "Bash"]
----
-
-You are [agent role description]...
-
-**Your Core Responsibilities:**
-1. [Responsibility 1]
-2. [Responsibility 2]
-
-**Analysis Process:**
-1. [Step one]
-2. [Step two]
-
-**Output Format:**
-[What to return]
+```json5
+{
+  agents: {
+    list: [
+      { id: "main", default: true }
+    ],
+  },
+}
 ```
 
-### File Location
+### 完整配置示例
 
-**In plugins**: `plugin-name/agents/agent-name.md`
-
-**In OpenClaw workspaces**: `<workspace>/agents/agent-name.md` (if supported)
-
-All `.md` files in `agents/` directory are auto-discovered.
-
-## Frontmatter Fields
-
-### name (required)
-
-Agent identifier used for namespacing and invocation.
-
-**Format**: lowercase, numbers, hyphens only
-**Length**: 3-50 characters
-**Pattern**: Must start and end with alphanumeric
-
-**Good examples**:
-- `skill-reviewer`
-- `plugin-validator`
-- `code-analyzer`
-- `deployment-checker`
-
-**Bad examples**:
-- `agent` (too generic)
-- `-helper-` (starts/ends with hyphen)
-- `my_agent` (underscores not allowed)
-- `ag` (too short, <3 chars)
-
-### description (required)
-
-**This is the most critical field.** Defines when OpenClaw/Claude should trigger this agent.
-
-**Must include**:
-1. Triggering conditions ("Use this agent when...")
-2. Multiple `<example>` blocks showing usage scenarios
-3. Context, user request, and assistant response in each example
-4. `<commentary>` explaining why agent triggers
-
-**Format**:
-```
-Use this agent when [conditions]. Examples:
-
-<example>
-Context: [Scenario description]
-user: "[What user says]"
-assistant: "[How Claude should respond]"
-<commentary>
-[Why this agent is appropriate]
-</commentary>
-</example>
-
-[More examples...]
+```json5
+{
+  agents: {
+    defaults: {
+      model: "anthropic/claude-sonnet-4-5",  // 所有 agent 默认 model
+    },
+    list: [
+      {
+        id: "personal",
+        name: "Personal",
+        default: true,
+        workspace: "~/.openclaw/workspace-personal",
+        agentDir: "~/.openclaw/agents/personal/agent",
+        model: "anthropic/claude-opus-4-6",  // 覆盖默认
+        identity: { name: "My AI" },
+        groupChat: {
+          mentionPatterns: ["@myai", "@AI"],
+        },
+        sandbox: {
+          mode: "off",
+        },
+        // 无 tools 限制 = 全部可用
+      },
+      {
+        id: "family",
+        name: "Family Bot",
+        workspace: "~/.openclaw/workspace-family",
+        identity: { name: "Family Bot" },
+        groupChat: {
+          mentionPatterns: ["@family", "@familybot"],
+        },
+        sandbox: {
+          mode: "all",
+          scope: "agent",
+          docker: {
+            setupCommand: "apt-get update && apt-get install -y git curl",
+          },
+        },
+        tools: {
+          allow: ["exec", "read", "sessions_list", "session_status"],
+          deny: ["write", "edit", "apply_patch", "browser", "canvas", "cron"],
+        },
+      },
+    ],
+  },
+}
 ```
 
-**Best practices**:
-- Include 2-4 concrete examples
-- Show both proactive and reactive triggering
-- Cover different phrasings of same intent
-- Explain reasoning in commentary
-- Be specific about when NOT to use the agent
+### agents.list[] 字段参考
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `id` | string | **必填**。Agent 标识符，kebab-case |
+| `name` | string | 显示名称 |
+| `default` | boolean | 默认 agent（fallback 路由） |
+| `workspace` | string | Workspace 目录路径 |
+| `agentDir` | string | State 目录路径 |
+| `model` | string | 模型覆盖 (`provider/model-name`) |
+| `identity.name` | string | Agent 名字 |
+| `groupChat.mentionPatterns` | string[] | 群组 @mention 匹配 |
+| `sandbox.mode` | string | `off` / `all` (沙盒模式) |
+| `sandbox.scope` | string | `agent` / `shared` (容器范围) |
+| `sandbox.docker.setupCommand` | string | 容器创建后一次性安装命令 |
+| `tools.allow` | string[] | 工具白名单 |
+| `tools.deny` | string[] | 工具黑名单 (deny 优先) |
+| `heartbeat` | object | Per-agent 心跳配置 |
+| `subagents.allowAgents` | string[] | 允许委派到的 agent ID 列表 |
+
+## 创建 Agent
+
+### 交互式向导（推荐）
 
-**Example from skill-reviewer**:
-```yaml
-description: Use this agent when the user has created or modified an OpenClaw skill and needs quality review. Examples:
-
-<example>
-Context: User just created a new skill
-user: "I've created a PDF processing skill"
-assistant: "Great! Let me review the skill quality."
-<commentary>
-Skill created, proactively trigger skill-reviewer to ensure it follows best practices.
-</commentary>
-assistant: "I'll use the skill-reviewer agent to review the skill."
-</example>
-```
-
-### model (required)
-
-Which model the agent should use.
-
-**Options**:
-- `inherit` - Use same model as parent (recommended)
-- `sonnet` - Claude Sonnet (balanced performance/cost)
-- `opus` - Claude Opus (most capable, expensive)
-- `haiku` - Claude Haiku (fast, cheap)
-
-**Recommendation**: Use `inherit` unless agent needs specific model capabilities.
-
-**When to override**:
-- `haiku` for simple validation checks
-- `opus` for complex analysis requiring maximum capability
-- `sonnet` for standard autonomous work
-
-### color (required)
-
-Visual identifier for agent in UI.
-
-**Options**: `blue`, `cyan`, `green`, `yellow`, `magenta`, `red`
-
-**Guidelines**:
-- Choose distinct colors for different agents in same plugin
-- Use consistent colors for similar agent types
-- **Blue/cyan**: Analysis, review, research
-- **Green**: Success-oriented tasks, deployment
-- **Yellow**: Caution, validation, warnings
-- **Red**: Critical issues, security, errors
-- **Magenta**: Creative work, generation
-
-### tools (optional)
-
-Restrict agent to specific tools (principle of least privilege).
-
-**Format**: Array of tool names
-
-```yaml
-tools: ["Read", "Write", "Grep", "Bash"]
-```
-
-**Default**: If omitted, agent has access to all tools
-
-**Common tool sets**:
-- **Read-only analysis**: `["Read", "Grep", "Glob"]`
-- **Code generation**: `["Read", "Write", "Grep", "Edit"]`
-- **Testing**: `["Read", "Bash", "Grep"]`
-- **Validation**: `["Read", "Grep", "Glob"]`
-- **Full access**: Omit field or use `["*"]`
-
-**Best practice**: Limit tools to minimum needed for security and clarity.
-
-## System Prompt Design
-
-The markdown body becomes the agent's system prompt. Write in second person, addressing the agent directly as "you".
-
-### Structure Template
-
-```markdown
-You are [role] specializing in [domain].
-
-**Your Core Responsibilities:**
-1. [Primary responsibility]
-2. [Secondary responsibility]
-3. [Additional responsibilities...]
-
-**Analysis Process:**
-1. [Step one - what to do first]
-2. [Step two - next action]
-3. [Step three - continue...]
-4. [Final step - completion]
-
-**Quality Standards:**
-- [Standard 1]
-- [Standard 2]
-- [Standard 3]
-
-**Output Format:**
-Provide results in this format:
-- [Section 1]: [What to include]
-- [Section 2]: [What to include]
-- [Summary]: [What to conclude]
-
-**Edge Cases:**
-Handle these situations:
-- [Edge case 1]: [How to handle]
-- [Edge case 2]: [How to handle]
-
-**When to Stop:**
-Complete work when [completion criteria].
-```
-
-### Writing Best Practices
-
-✅ **DO**:
-- Write in second person ("You are...", "You will...", "Check...")
-- Be specific about responsibilities and process
-- Provide step-by-step workflow
-- Define clear output format
-- Include quality standards
-- Address edge cases and error scenarios
-- Keep under 10,000 characters
-- Use imperative commands ("Analyze...", "Verify...", "Report...")
-
-❌ **DON'T**:
-- Write in first person ("I am...", "I will...")
-- Be vague or generic about what agent does
-- Omit process steps or workflow
-- Leave output format undefined
-- Skip quality guidance
-- Ignore error cases
-- Write overly long prompts (>10k chars)
-- Use passive voice
-
-### Example System Prompts
-
-**Validation Agent**:
-```markdown
-You are a validation specialist for OpenClaw plugins.
-
-**Your Core Responsibilities:**
-1. Validate plugin structure and manifest
-2. Check naming conventions and file locations
-3. Verify component configuration
-4. Identify security issues
-5. Report findings with severity levels
-
-**Analysis Process:**
-1. Read plugin.json and verify required fields
-2. Check directory structure matches conventions
-3. Validate component files (skills, commands, agents)
-4. Scan for hardcoded paths and security issues
-5. Generate validation report
-
-**Quality Standards:**
-- All issues categorized by severity (critical, warning, info)
-- Specific file paths and line numbers provided
-- Clear remediation guidance for each issue
-- No false positives
-
-**Output Format:**
-# Plugin Validation Report
-
-## Critical Issues
-- [Issue with file:line reference]
-
-## Warnings
-- [Warning with context]
-
-## Recommendations
-- [Improvement suggestion]
-
-**Edge Cases:**
-- Missing manifest: Report critical error
-- Empty components: Warning, not error
-- Custom paths: Validate they exist
-```
-
-**Code Review Agent**:
-```markdown
-You are an expert code reviewer specializing in quality, security, and best practices.
-
-**Your Core Responsibilities:**
-1. Analyze code structure and organization
-2. Identify security vulnerabilities
-3. Check adherence to coding standards
-4. Assess test coverage
-5. Provide actionable feedback
-
-**Analysis Process:**
-1. Read all changed files
-2. Analyze code patterns and architecture
-3. Scan for security issues (injection, XSS, etc.)
-4. Check error handling and edge cases
-5. Verify documentation and comments
-6. Generate structured review
-
-**Quality Standards:**
-- Every issue includes file:line reference
-- Security issues prioritized
-- Suggestions are specific and actionable
-- Positive feedback included for good patterns
-
-**Output Format:**
-# Code Review: [Component Name]
-
-## Security Issues (Critical)
-- [Issue at file.py:123]
-
-## Code Quality
-- [Improvement at file.js:45]
-
-## Best Practices
-- [Suggestion with example]
-
-## Positive Observations
-- [Good pattern at file.ts:67]
-```
-
-## Creating Agents
-
-### Method 1: AI-Assisted Generation
-
-Use this prompt pattern for creating agents:
-
-```
-Create an agent configuration for: "[YOUR DESCRIPTION]"
-
-Requirements:
-1. Extract core intent and responsibilities
-2. Design expert persona for the domain
-3. Create comprehensive system prompt with:
-   - Clear behavioral boundaries
-   - Specific methodologies
-   - Edge case handling
-   - Output format
-4. Create identifier (lowercase, hyphens, 3-50 chars)
-5. Write description with triggering conditions
-6. Include 2-3 <example> blocks showing when to use
-
-Return configuration in agent markdown format.
-```
-
-### Method 2: Manual Creation
-
-1. **Define purpose**: What specific task does agent handle?
-2. **Choose identifier**: 3-50 chars, lowercase, hyphens
-3. **Write description**: Include triggering examples
-4. **Select model**: Usually `inherit`
-5. **Choose color**: For visual identification
-6. **Define tools**: Minimum needed for task
-7. **Write system prompt**: Use template above
-8. **Save file**: `agents/agent-name.md`
-
-### Method 3: Use scaffold-agent Command
-
-Use the `scaffold-agent` command for interactive creation:
-
-```
-/scaffold-agent
-```
-
-This walks through all required fields and generates the agent file.
-
-## Validation
-
-### Identifier Validation
-
-```
-✅ Valid: skill-reviewer, code-analyzer, test-gen-v2
-❌ Invalid: ag (too short), -start (starts with hyphen), my_agent (underscore)
-```
-
-**Rules**:
-- 3-50 characters
-- Lowercase letters, numbers, hyphens only
-- Must start and end with alphanumeric
-- No underscores, spaces, or special characters
-
-### Description Validation
-
-**Length**: 10-5,000 characters
-**Must include**: Triggering conditions and examples
-**Optimal**: 200-1,000 characters with 2-4 examples
-
-### System Prompt Validation
-
-**Length**: 20-10,000 characters
-**Optimal**: 500-3,000 characters
-**Structure**: Clear responsibilities, process, output format
-
-## Integration with OpenClaw
-
-### Agent Deployment
-
-Agents in plugins are automatically discovered when plugin is installed to OpenClaw.
-
-**Plugin structure**:
-```
-my-plugin/
-├── .claude-plugin/plugin.json
-└── agents/
-    ├── validator.md
-    └── reviewer.md
-```
-
-**Installation**:
 ```bash
-# Copy/link plugin to OpenClaw
-cp -r my-plugin ~/.openclaw/plugins/
-
-# Or link for development
-ln -s /path/to/my-plugin ~/.openclaw/plugins/my-plugin
+openclaw agents add coding
 ```
 
-### Triggering Agents
+向导会创建 workspace、agentDir、session store，并提示添加 bindings。
 
-**Automatic triggering**: Agent activates when user request matches description examples
+### 手动创建
 
-**Manual invocation**: User or main agent can request specific agent
+```bash
+# 1. 在 openclaw.json 中添加 agents.list[] 条目
+# 2. 创建 workspace
+mkdir -p ~/.openclaw/workspace-coding
 
-**Example flow**:
-1. User: "I've created a new skill, can you review it?"
-2. Main agent recognizes pattern from skill-reviewer description
-3. Main agent launches skill-reviewer agent
-4. skill-reviewer performs analysis
-5. skill-reviewer reports findings back
+# 3. 创建 persona 文件
+cat > ~/.openclaw/workspace-coding/SOUL.md << 'EOF'
+You are a focused coding assistant.
+You prefer clean, minimal solutions.
+You always explain your reasoning.
+EOF
 
-### Agent Coordination
+cat > ~/.openclaw/workspace-coding/AGENTS.md << 'EOF'
+# Agent Workflow
+- Always read before writing
+- Run tests after changes
+- Commit with descriptive messages
+EOF
 
-Agents can work together:
-- **Sequential**: Agent A completes, then Agent B starts
-- **Parallel**: Multiple agents work simultaneously (if independent)
-- **Hierarchical**: Main agent delegates to specialized sub-agents
+# 4. 重启 Gateway
+openclaw gateway restart
 
-**Example**:
-```
-User requests: "Build and deploy the plugin"
-
-Main agent:
-1. Launches build-agent (validates, tests)
-2. Waits for build-agent completion
-3. Launches deploy-agent (deploys to target)
-4. Monitors both, reports to user
-```
-
-## Testing Agents
-
-### Test Triggering
-
-Verify agent triggers correctly:
-
-1. Create test scenarios matching description examples
-2. Use similar phrasing to examples
-3. Check agent activates appropriately
-4. Verify agent doesn't trigger on unrelated requests
-
-### Test System Prompt
-
-Ensure system prompt is effective:
-
-1. Give agent typical task
-2. Check it follows process steps
-3. Verify output format is correct
-4. Test edge cases mentioned in prompt
-5. Confirm quality standards met
-
-### Test Tool Restrictions
-
-If tools are restricted:
-
-1. Verify agent can complete tasks with given tools
-2. Check agent doesn't attempt to use unavailable tools
-3. Ensure tool set is sufficient but not excessive
-
-## Common Patterns
-
-### Validation Agent Pattern
-
-```markdown
----
-name: validator-name
-description: Use this agent when validation needed. Examples: <example>...</example>
-model: inherit
-color: yellow
-tools: ["Read", "Grep", "Glob"]
----
-
-You are a validation specialist...
-
-**Validation Checks:**
-1. [Check 1]
-2. [Check 2]
-
-**Output Format:**
-- Critical: [Issues]
-- Warnings: [Issues]
-- Passed: [Checks]
+# 5. 验证
+openclaw agents list --bindings
 ```
 
-### Generator Agent Pattern
+## Workspace 人格文件
 
-```markdown
----
-name: generator-name
-description: Use this agent when generation needed. Examples: <example>...</example>
-model: inherit
-color: magenta
-tools: ["Read", "Write", "Grep"]
----
+| 文件 | 用途 | 注意 |
+|------|------|------|
+| `SOUL.md` | 人格、语气、边界 | 每个 session 加载 |
+| `AGENTS.md` | 操作指令、工作流规则 | 每个 session 加载 |
+| `USER.md` | 用户信息、称呼 | 每个 session 加载 |
+| `IDENTITY.md` | Agent 名字、emoji | Bootstrap 时 |
+| `TOOLS.md` | 工具使用约定 | 每个 session 加载 |
+| `MEMORY.md` | 长期记忆索引 | Main session 加载 |
+| `skills/` | Per-agent skills | 最高优先级 |
 
-You are a code generator...
+**关键**: Workspace 是 agent 的默认 cwd，不是硬沙盒。除非启用 sandboxing，绝对路径可以访问其他位置。
 
-**Generation Process:**
-1. Analyze requirements
-2. Design structure
-3. Generate code
-4. Validate output
+## Bindings (消息路由)
 
-**Output Format:**
-[Generated files with explanations]
+Bindings 将入站消息路由到特定 agent：
+
+```json5
+{
+  bindings: [
+    // 最具体的规则优先
+    {
+      agentId: "opus",
+      match: {
+        channel: "whatsapp",
+        peer: { kind: "direct", id: "+15551234567" },
+      },
+    },
+    // Channel 级别 fallback
+    { agentId: "chat", match: { channel: "whatsapp" } },
+    // 账号级别绑定
+    { agentId: "coding", match: { channel: "discord", accountId: "coding" } },
+  ],
+}
 ```
 
-### Analyzer Agent Pattern
+### 路由优先级 (高 → 低)
 
-```markdown
----
-name: analyzer-name
-description: Use this agent when analysis needed. Examples: <example>...</example>
-model: inherit
-color: blue
-tools: ["Read", "Grep", "Glob", "Bash"]
----
+1. `peer` (精确 DM/group/channel ID)
+2. `parentPeer` (thread 继承)
+3. `guildId + roles` (Discord role)
+4. `guildId` (Discord)
+5. `teamId` (Slack)
+6. `accountId`
+7. `channel` (accountId: "*")
+8. 默认 agent (`agents.list[].default`)
 
-You are an analysis specialist...
+多条规则匹配同一 tier → 配置顺序取胜。
 
-**Analysis Steps:**
-1. Collect data
-2. Identify patterns
-3. Generate insights
-4. Provide recommendations
+### 常见路由模式
 
-**Output Format:**
-## Analysis
-[Findings]
-
-## Recommendations
-[Actionable suggestions]
+**按渠道分流**:
+```json5
+bindings: [
+  { agentId: "chat", match: { channel: "whatsapp" } },
+  { agentId: "opus", match: { channel: "telegram" } },
+]
 ```
 
-## Best Practices Summary
-
-**Agent Design**:
-- Single responsibility per agent
-- Clear, specific triggering conditions
-- Comprehensive examples in description
-- Appropriate model selection
-- Minimal necessary tools
-
-**System Prompts**:
-- Second person voice ("You are...")
-- Step-by-step process
-- Clear output format
-- Quality standards defined
-- Edge cases addressed
-
-**Testing**:
-- Verify triggering works correctly
-- Test with realistic scenarios
-- Validate output format
-- Check edge case handling
-- Ensure tool restrictions work
-
-## Quick Reference
-
-### Minimal Agent
-
-```markdown
----
-name: simple-agent
-description: Use this agent when... Examples: <example>user: "..."...</example>
-model: inherit
-color: blue
----
-
-You are an agent that [does X].
-
-Process:
-1. [Step 1]
-2. [Step 2]
-
-Output: [What to provide]
+**同渠道按联系人分流**:
+```json5
+bindings: [
+  { agentId: "alex", match: { channel: "whatsapp", peer: { kind: "direct", id: "+15551230001" } } },
+  { agentId: "mia", match: { channel: "whatsapp", peer: { kind: "direct", id: "+15551230002" } } },
+]
 ```
 
-### Frontmatter Fields
+**按 Discord bot 分流**:
+```json5
+bindings: [
+  { agentId: "main", match: { channel: "discord", accountId: "default" } },
+  { agentId: "coding", match: { channel: "discord", accountId: "coding" } },
+]
+```
 
-| Field | Required | Example |
-|-------|----------|---------|
-| name | Yes | skill-reviewer |
-| description | Yes | Use when... <example>... |
-| model | Yes | inherit |
-| color | Yes | blue |
-| tools | No | ["Read", "Grep"] |
+## Agent 间通信
 
-### Tool Sets by Purpose
+### Agent-to-Agent 消息 (sessions_send)
 
-- **Validation**: `["Read", "Grep", "Glob"]`
-- **Generation**: `["Read", "Write", "Edit"]`
-- **Testing**: `["Read", "Bash", "Grep"]`
-- **Analysis**: `["Read", "Grep", "Bash"]`
-- **Full**: Omit field or `["*"]`
+默认**关闭**。需显式启用:
+
+```json5
+{
+  tools: {
+    agentToAgent: {
+      enabled: true,
+      allow: ["personal", "work"],  // 允许通信的 agent 列表
+    },
+  },
+}
+```
+
+### 委派子 Agent (sessions_spawn)
+
+```json5
+{
+  agents: {
+    list: [
+      {
+        id: "main",
+        subagents: {
+          allowAgents: ["coding", "research"],  // 可委派到的 agent
+        },
+      },
+    ],
+  },
+}
+```
+
+⚠️ **Auth profiles 不共享**。每个 agent 读取自己的 `~/.openclaw/agents/<agentId>/agent/auth-profiles.json`。如需共享凭证，手动复制。
+
+## 模型配置
+
+```
+agents.defaults.model (全局默认)
+  → agents.list[].model (per-agent 覆盖)
+```
+
+模型格式: `provider/model-name`
+
+```json5
+{
+  agents: {
+    defaults: { model: "anthropic/claude-sonnet-4-5" },
+    list: [
+      { id: "chat", model: "anthropic/claude-sonnet-4-5" },
+      { id: "opus", model: "anthropic/claude-opus-4-6" },
+      { id: "fast", model: "anthropic/claude-haiku-3-5" },
+    ],
+  },
+}
+```
+
+## Per-Agent 安全
+
+### 工具限制
+
+```json5
+{
+  agents: {
+    list: [{
+      id: "restricted",
+      tools: {
+        allow: ["read", "exec"],        // 白名单
+        deny: ["write", "edit", "cron"], // 黑名单 (deny wins)
+      },
+    }],
+  },
+}
+```
+
+### 沙盒
+
+```json5
+{
+  agents: {
+    list: [{
+      id: "untrusted",
+      sandbox: {
+        mode: "all",       // off | all
+        scope: "agent",    // agent (独立容器) | shared
+      },
+    }],
+  },
+}
+```
+
+⚠️ `tools.elevated` 是**全局**配置，不能 per-agent。如需限制，用 `tools.deny` 禁止 `exec`。
+
+## 验证与调试
+
+```bash
+# 列出所有 agent 及绑定
+openclaw agents list --bindings
+
+# 检查 channel 连接
+openclaw channels status --probe
+
+# 检查特定 agent session
+ls ~/.openclaw/agents/<agentId>/sessions/*.jsonl
+
+# 查看路由决策日志
+openclaw gateway --verbose
+```
+
+## 常见问题
+
+| 问题 | 原因 | 修复 |
+|------|------|------|
+| 消息路由到错误 agent | Binding 优先级不对 | 更具体的规则放前面 |
+| Agent 无响应 | 无匹配 binding | `openclaw agents list --bindings` 检查 |
+| Auth 失败 | Agent 无 auth profile | 复制或创建 `auth-profiles.json` |
+| Session 混乱 | 共享 agentDir | 确保每个 agent 有独立 agentDir |
+| Skills 不加载 | Workspace 路径错误 | 检查 `agents.list[].workspace` |
 
 ## Additional Resources
 
-### Reference Files
-
-For detailed guidance:
-- **`references/system-prompt-examples.md`** - Complete system prompt patterns
-- **`references/triggering-best-practices.md`** - Example format guidelines
-
-### Example Files
-
-Working examples:
-- **`examples/validation-agent.md`** - Complete validation agent
-- **`examples/generator-agent.md`** - Complete generation agent
-
-Focus on clear triggering conditions, comprehensive system prompts, and appropriate tool restrictions for effective OpenClaw agents.
+- **`references/system-prompt-examples.md`** — SOUL.md 和 AGENTS.md 的实际生产示例
