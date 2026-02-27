@@ -1,9 +1,3 @@
----
-name: openclaw-agent-development
-description: "Use this skill when asked to create an OpenClaw agent, configure multi-agent routing, set up agent bindings, design agent workspaces, configure per-agent security/sandbox/tools, understand agent delegation (sessions_spawn), or troubleshoot agent routing. Covers the real OpenClaw agent system: agents.list[] config in openclaw.json, bindings, workspace isolation, SOUL.md/AGENTS.md/USER.md persona files, per-agent model/tools/sandbox, and inter-agent communication."
-metadata: {"clawdbot":{"always":false,"emoji":"🤖"}}
-version: 2.0.0
----
 
 # OpenClaw Agent Development
 

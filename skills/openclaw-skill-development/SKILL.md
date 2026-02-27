@@ -1,8 +1,9 @@
 ---
 name: openclaw-skill-development
-description: "Guided workflow for creating, validating, and deploying OpenClaw (clawdbot) skills. This skill should be used when the user asks to 'create a skill for OpenClaw', 'build a SKILL.md', 'develop an agent skill', 'add skill to workspace', 'validate skill structure', 'deploy skill to agent', 'deploy skill to remote agent', 'what metadata fields are required', 'how to trigger skills', 'skill frontmatter format', 'progressive disclosure pattern', 'write skill description', 'skill best practices', or mentions openclaw/clawdbot skill development. Covers the full lifecycle: requirements gathering, SKILL.md scaffolding, frontmatter validation, local and remote workspace deployment, gateway restart, and session verification."
+description: "Guided workflow for creating, validating, deploying, and evolving OpenClaw skills. Use when asked to 'create a skill', 'build a SKILL.md', 'develop an agent skill', 'validate skill', 'deploy skill', 'evolve skill', 'improve skill from usage data', 'analyze session logs for skill performance', 'upgrade skills based on usage', or any skill lifecycle task. Covers: requirements, scaffolding, frontmatter, deployment, session verification, and data-driven evolution."
 metadata: {"clawdbot":{"always":false,"emoji":"🛠️","requires":{"bins":["jq"]}}}
 user-invocable: true
+version: 2.0.0
 ---
 
 # OpenClaw Skill Development — Standard Operating Procedure

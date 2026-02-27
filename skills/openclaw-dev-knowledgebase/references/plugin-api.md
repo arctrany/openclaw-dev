@@ -1,9 +1,3 @@
----
-name: openclaw-plugin-architecture
-description: "Use this skill when asked to create an OpenClaw plugin/extension, structure an OpenClaw plugin, write openclaw.plugin.json manifest, register tools/channels/providers, build OpenClaw extensions, understand OpenClaw plugin API, or implement plugin hooks. Covers the real OpenClaw TypeScript plugin system: manifest, api.register* methods, channel plugins, provider auth flows, hook registration, background services, CLI commands, and distribution via npm."
-metadata: {"clawdbot":{"always":false,"emoji":"🏗️"}}
-version: 2.0.0
----
 
 # OpenClaw Plugin Architecture
 

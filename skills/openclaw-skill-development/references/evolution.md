@@ -1,10 +1,3 @@
----
-name: openclaw-skill-evolution
-description: This skill should be used when the user asks to "evolve skills", "upgrade skills based on usage", "analyze session logs", "improve skills from agent sessions", "skill performance analysis", "optimize skills from real usage", or needs to analyze OpenClaw agent session logs to identify skill improvement opportunities and evolve skills based on actual usage patterns, errors, performance metrics, and tool/model interactions.
-metadata: {"clawdbot":{"always":false,"emoji":"🧬","requires":{"bins":["jq","python3"]}}}
-user-invocable: true
-version: 1.0.0
----
 
 # OpenClaw Skill Evolution - Data-Driven Skill Improvement
 
@@ -195,6 +188,3 @@ cp skills/$SKILL/SKILL.md skills/$SKILL/.evolution/v$(get-version).md
 - **`references/analysis-scripts.md`** — Detailed script documentation and output examples
 - **`references/advanced-techniques.md`** — Semantic analysis, causal analysis, A/B testing, automated generation, continuous pipeline
 
----
-
-**Remember**: Skills should continuously evolve based on how agents actually use them. Data-driven evolution ensures skills remain effective and valuable.
