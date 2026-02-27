@@ -9,7 +9,7 @@ You are guiding the user through creating a new OpenClaw skill. Follow these ste
 
 ## Step 1: Gather Requirements
 
-Ask the user (use AskUserQuestion):
+Ask the user:
 
 1. **Which agent?** — List agents from `~/.openclaw/openclaw.json` via:
    ```bash
@@ -62,7 +62,7 @@ Write `SKILL.md` following the format from the `openclaw-skill-development` skil
 
 Run the validation script:
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/validate-skill.sh "$WORKSPACE/skills/<skill-name>"
+bash scripts/validate-skill.sh "$WORKSPACE/skills/<skill-name>"
 ```
 
 Fix any failures before proceeding.
@@ -73,7 +73,7 @@ Fix any failures before proceeding.
 2. Tell user to send `/new` to the agent via messaging platform
 3. Verify skill loaded in session:
    ```bash
-   bash ${CLAUDE_PLUGIN_ROOT}/scripts/verify-skill.sh "<agent-id>" "<skill-name>"
+   bash scripts/verify-skill.sh "<agent-id>" "<skill-name>"
    ```
 
 ## Step 6: Report
@@ -85,5 +85,5 @@ Skill created: <skill-name>
   Agent: <agent-id>
   Mode: <always-on | model-triggered | user-invocable | hybrid>
   Status: <loaded in session | pending /new>
-  Verify: bash ${CLAUDE_PLUGIN_ROOT}/scripts/verify-skill.sh "<agent-id>" "<skill-name>"
+  Verify: bash scripts/verify-skill.sh "<agent-id>" "<skill-name>"
 ```

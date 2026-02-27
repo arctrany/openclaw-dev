@@ -1,78 +1,55 @@
 ---
 name: scaffold-plugin
-description: Interactive workflow to create a new OpenClaw plugin from scratch. Walks through plugin structure, manifest creation, and component setup.
+description: Interactive workflow to create a new OpenClaw plugin (extension) with manifest, TypeScript entry point, and component registration.
 argument-hint: [plugin-name]
 ---
 
 # Scaffold OpenClaw Plugin
 
-You are guiding the user through creating a new OpenClaw plugin. Follow these steps strictly.
+Guide the user through creating a new OpenClaw plugin (extension).
 
 ## Step 1: Gather Requirements
 
-Use AskUserQuestion to gather:
+Ask the user:
 
 1. **Plugin name** (if not provided as $1)
    - Must be kebab-case
-   - Should be descriptive
-   - Will be used for directory and manifest
+   - Examples: `voice-assistant`, `slack-channel`, `custom-tools`
 
-2. **Plugin purpose**
-   - What problem does it solve?
-   - What capabilities does it provide?
+2. **Plugin purpose** — What capability does it add?
 
-3. **Components to include**
-   - Skills? (for specialized knowledge)
-   - Commands? (for user-initiated actions)
-   - Agents? (for autonomous tasks)
-   - Hooks? (for event-driven automation)
-   - Scripts? (for utilities)
+3. **Components to register** (select all that apply):
+   - Tool (new tool for agents)
+   - Channel (new messaging platform)
+   - Provider (model/auth provider)
+   - Hook (event handler)
+   - CLI command (openclaw CLI extension)
+   - Service (background service)
 
-4. **Author information**
-   - Name
-   - Email (optional)
+4. **Author information** — Name, email (optional)
 
 ## Step 2: Validate Plugin Name
 
 ```bash
-PLUGIN_NAME="${1:-<from AskUserQuestion>}"
+PLUGIN_NAME="${1:-<from user>}"
 
-# Validate kebab-case format
 if ! echo "$PLUGIN_NAME" | grep -qE '^[a-z0-9]+(-[a-z0-9]+)*$'; then
-  echo "ERROR: Plugin name must be kebab-case (lowercase with hyphens)"
-  echo "Examples: my-plugin, openclaw-toolkit, skill-helper"
+  echo "ERROR: Plugin name must be kebab-case"
   exit 1
 fi
 
-# Check if directory already exists
 if [ -d "$PLUGIN_NAME" ]; then
   echo "WARNING: Directory $PLUGIN_NAME already exists"
-  echo "Options:"
-  echo "1. Choose a different name"
-  echo "2. Merge with existing directory (advanced)"
-  echo "3. Cancel"
 fi
 ```
 
 ## Step 3: Create Directory Structure
 
-Based on selected components, create the plugin structure:
-
 ```bash
-# Core structure (always created)
-mkdir -p "$PLUGIN_NAME/.claude-plugin"
-
-# Optional component directories (based on user selection)
-[ "$INCLUDE_SKILLS" = "true" ] && mkdir -p "$PLUGIN_NAME/skills"
-[ "$INCLUDE_COMMANDS" = "true" ] && mkdir -p "$PLUGIN_NAME/commands"
-[ "$INCLUDE_AGENTS" = "true" ] && mkdir -p "$PLUGIN_NAME/agents"
-[ "$INCLUDE_HOOKS" = "true" ] && mkdir -p "$PLUGIN_NAME/hooks"
-[ "$INCLUDE_SCRIPTS" = "true" ] && mkdir -p "$PLUGIN_NAME/scripts"
+mkdir -p "$PLUGIN_NAME/src"
 ```
 
-## Step 4: Create plugin.json Manifest
-
-Write the manifest with gathered information:
+## Step 4: Create openclaw.plugin.json
 
 ```json
 {
@@ -80,309 +57,127 @@ Write the manifest with gathered information:
   "version": "0.1.0",
   "description": "<plugin-purpose>",
   "author": {
-    "name": "<author-name>",
-    "email": "<author-email>"
+    "name": "<author-name>"
   },
-  "keywords": ["openclaw", "<relevant>", "<keywords>"]
+  "entry": "./src/index.ts"
 }
 ```
 
-Save to `$PLUGIN_NAME/.claude-plugin/plugin.json`
+Save to `$PLUGIN_NAME/openclaw.plugin.json`
 
-## Step 5: Create README.md
+## Step 5: Create package.json
 
-Generate a comprehensive README:
-
-```markdown
-# <Plugin Name>
-
-<Plugin purpose/description>
-
-## Installation
-
-### Local Development
-\`\`\`bash
-# Link to OpenClaw plugins directory
-ln -s /path/to/<plugin-name> ~/.openclaw/plugins/<plugin-name>
-
-# Or copy
-cp -r <plugin-name> ~/.openclaw/plugins/
-\`\`\`
-
-### Claude Code
-\`\`\`bash
-# Install to Claude Code
-cc --plugin-dir /path/to/<plugin-name>
-\`\`\`
-
-## Components
-
-[List created components: skills, commands, agents, hooks]
-
-## Usage
-
-[Provide usage examples based on components]
-
-## Development
-
-### Adding Skills
-\`\`\`bash
-mkdir -p skills/skill-name
-# Create SKILL.md following openclaw-skill-development patterns
-\`\`\`
-
-### Adding Commands
-\`\`\`bash
-# Create command file
-touch commands/command-name.md
-# Add frontmatter and instructions
-\`\`\`
-
-### Adding Agents
-\`\`\`bash
-# Create agent file
-touch agents/agent-name.md
-# Add frontmatter with examples and system prompt
-\`\`\`
-
-## Testing
-
-### Local Testing
-\`\`\`bash
-# Test in OpenClaw
-~/.openclaw/plugins/<plugin-name>
-
-# Test in Claude Code
-cc --plugin-dir /path/to/<plugin-name>
-\`\`\`
-
-## License
-
-[License information]
-
-## Author
-
-<Author name> <<author-email>>
+```json
+{
+  "name": "<plugin-name>",
+  "version": "0.1.0",
+  "type": "module",
+  "openclaw": {
+    "extensions": ["."]
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
 ```
 
-Save to `$PLUGIN_NAME/README.md`
+## Step 6: Create TypeScript Entry Point
 
-## Step 6: Create .gitignore (Optional)
+Generate `$PLUGIN_NAME/src/index.ts` based on selected components:
 
-If user wants version control:
+```typescript
+import type { PluginAPI } from "openclaw";
 
+export default function activate(api: PluginAPI) {
+  // Tool registration
+  api.registerTool("my-tool", {
+    description: "Description of what this tool does",
+    parameters: {
+      input: { type: "string", description: "Input parameter" },
+    },
+    async execute({ input }) {
+      // Tool implementation
+      return { result: `Processed: ${input}` };
+    },
+  });
+
+  // Channel registration (if selected)
+  // api.registerChannel("my-channel", { ... });
+
+  // Hook registration (if selected)
+  // api.registerHook("onSessionStart", async (ctx) => { ... });
+
+  // CLI command (if selected)
+  // api.registerCLI("my-cmd", { ... });
+
+  // Service (if selected)
+  // api.registerService("my-service", { ... });
+}
 ```
-# Claude Code local settings
-.claude/*.local.md
 
-# macOS
-.DS_Store
+Uncomment relevant sections based on user's component selections.
 
-# Editor files
-.vscode/
-.idea/
-*.swp
-*.swo
+## Step 7: Create tsconfig.json
 
-# Node modules (if using npm)
-node_modules/
-
-# Python
-__pycache__/
-*.pyc
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*.ts"]
+}
 ```
 
-Save to `$PLUGIN_NAME/.gitignore`
-
-## Step 7: Initialize Git (Optional)
-
-If user wants version control:
+## Step 8: Install Plugin
 
 ```bash
-cd "$PLUGIN_NAME"
-git init
-git add .
-git commit -m "Initial plugin scaffold: <plugin-name>"
+# Option A: Link to workspace extensions
+ln -s "$(pwd)/$PLUGIN_NAME" ~/.openclaw/extensions/$PLUGIN_NAME
+
+# Option B: Add to config
+# Edit ~/.openclaw/openclaw.json:
+#   plugins.load.paths: ["<absolute-path-to-plugin>"]
+
+# Restart Gateway
+pkill -TERM openclaw-gateway
+sleep 3
+openclaw health
+openclaw plugins list
 ```
 
-## Step 8: Create Component Templates
+## Step 9: Verify
 
-Based on selected components, create starter templates:
-
-### If Skills Selected
-
-Create example skill structure:
 ```bash
-mkdir -p "$PLUGIN_NAME/skills/example-skill/references"
+# Check plugin loaded
+openclaw plugins list | grep "$PLUGIN_NAME"
+
+# If tool registered, test it
+openclaw gateway call --method "tools.list" 2>/dev/null | grep "my-tool"
 ```
 
-Create `skills/example-skill/SKILL.md`:
-```markdown
----
-name: example-skill
-description: This skill should be used when the user asks to "trigger phrase 1", "trigger phrase 2". Provide comprehensive triggering conditions here.
-metadata: {"clawdbot":{"always":false,"emoji":"🔧"}}
----
-
-# Example Skill
-
-[Instructions for the agent in imperative voice...]
-
-## When to Use
-
-[Already covered in description - don't duplicate]
-
-## Process
-
-1. [Step 1]
-2. [Step 2]
-
-## Additional Resources
-
-See `references/` for detailed documentation.
-```
-
-### If Commands Selected
-
-Create example command:
-```markdown
----
-description: Example command description
-argument-hint: [arg1] [arg2]
-allowed-tools: Read, Write
----
-
-# Example Command
-
-[Instructions FOR Claude about what to do when this command runs]
-
-Process $1 with $2 parameters.
-```
-
-Save to `commands/example-command.md`
-
-### If Agents Selected
-
-Create example agent:
-```markdown
----
-name: example-agent
-description: Use this agent when... Examples:
-
-<example>
-Context: [Scenario]
-user: "[User request]"
-assistant: "[Response and agent usage]"
-<commentary>
-[Why trigger this agent]
-</commentary>
-</example>
-
-model: inherit
-color: blue
-tools: ["Read", "Grep"]
----
-
-You are an example agent specializing in [domain].
-
-**Your Core Responsibilities:**
-1. [Responsibility 1]
-2. [Responsibility 2]
-
-**Process:**
-1. [Step 1]
-2. [Step 2]
-
-**Output Format:**
-[What to provide]
-```
-
-Save to `agents/example-agent.md`
-
-### If Scripts Selected
-
-Create example validation script:
-```bash
-#!/usr/bin/env bash
-# Example validation script
-
-set -euo pipefail
-
-echo "Running validation..."
-
-# Add validation logic here
-
-echo "✓ Validation complete"
-```
-
-Save to `scripts/validate.sh` and make executable:
-```bash
-chmod +x "$PLUGIN_NAME/scripts/validate.sh"
-```
-
-## Step 9: Report Creation Summary
-
-Provide a comprehensive summary:
+## Step 10: Report
 
 ```
-✓ Plugin scaffolded: <plugin-name>
-  Location: ./<plugin-name>
-  Version: 0.1.0
+Plugin created: <plugin-name>
+  Location:  ./<plugin-name>/
+  Manifest:  openclaw.plugin.json
+  Entry:     src/index.ts
+  Components:
+    ✓ openclaw.plugin.json (manifest)
+    ✓ src/index.ts (entry point)
+    ✓ package.json
+    ✓ tsconfig.json
 
-Structure created:
-  ✓ .claude-plugin/plugin.json (manifest)
-  ✓ README.md (documentation)
-  [✓ skills/ (with example-skill)]
-  [✓ commands/ (with example-command)]
-  [✓ agents/ (with example-agent)]
-  [✓ hooks/]
-  [✓ scripts/ (with validate.sh)]
-  [✓ .gitignore]
-  [✓ Git repository initialized]
+Registered:
+    <tool|channel|hook|cli|service>: <name>
 
 Next steps:
-1. Review and customize component templates
-2. Add your actual skills/commands/agents
-3. Test locally:
-   - OpenClaw: ln -s $(pwd)/<plugin-name> ~/.openclaw/plugins/
-   - Claude Code: cc --plugin-dir $(pwd)/<plugin-name>
-4. Run validation: /validate-plugin <plugin-name>
-5. Document usage in README.md
-
-Component creation commands:
-  - Create skill: /create-skill
-  - Create agent: /scaffold-agent
-  - Validate plugin: /validate-plugin <plugin-name>
+  - Edit src/index.ts to implement your logic
+  - Run: openclaw plugins list (verify loaded)
+  - Test: send a message that triggers your tool
 ```
-
-## Step 10: Offer Next Actions
-
-Ask user what they want to do next:
-
-1. Create a skill for this plugin
-2. Create a command for this plugin
-3. Create an agent for this plugin
-4. Validate the plugin structure
-5. Done for now
-
-Use AskUserQuestion to present these options.
-
-## Important Notes
-
-- Always use ${CLAUDE_PLUGIN_ROOT} in hook commands and scripts for portability
-- Keep plugin.json minimal - only required fields initially
-- Component templates are starting points - customize based on actual needs
-- Test plugin installation before distribution
-- Follow openclaw-plugin-architecture patterns for structure
-- Use openclaw-skill-development guidelines for skills
-- Use openclaw-agent-development guidelines for agents
-
-## Validation Before Completion
-
-Before finishing, verify:
-- [ ] plugin.json exists and is valid JSON
-- [ ] Directory name matches plugin name in manifest
-- [ ] All selected component directories created
-- [ ] README.md provides clear installation instructions
-- [ ] Example templates follow best practices
-- [ ] Scripts are executable (if created)

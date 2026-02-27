@@ -22,7 +22,7 @@ ls -d "$WORKSPACE/skills/*/" 2>/dev/null
 
 Run the validation script:
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/validate-skill.sh "<skill-dir-path>"
+bash scripts/validate-skill.sh "<skill-dir-path>"
 ```
 
 Report results to the user. For any FAIL items, explain what's wrong and offer to fix it.

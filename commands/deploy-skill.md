@@ -28,7 +28,7 @@ Verify the skill exists at `$SKILL_DIR/SKILL.md`.
 
 Run validation before deploying:
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/validate-skill.sh "$SKILL_DIR"
+bash scripts/validate-skill.sh "$SKILL_DIR"
 ```
 
 If validation fails, stop and report. Do not deploy broken skills.
@@ -56,7 +56,7 @@ Wait for confirmation.
 ## Step 5: Verify
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/verify-skill.sh "$AGENT_ID" "<skill-name>"
+bash scripts/verify-skill.sh "$AGENT_ID" "<skill-name>"
 ```
 
 ## Step 6: Report
@@ -66,5 +66,5 @@ Deployment complete: <skill-name>
   Agent: <agent-id>
   Session: <new-session-id or "pending">
   Skill loaded: YES/NO
-  Verify command: bash ${CLAUDE_PLUGIN_ROOT}/scripts/verify-skill.sh "<agent-id>" "<skill-name>"
+  Verify: bash scripts/verify-skill.sh "<agent-id>" "<skill-name>"
 ```
