@@ -28,6 +28,7 @@ version: 2.0.0
 | **Hooks & Webhooks** | 内部事件驱动 + 外部 HTTP 接入 | `references/hooks-webhooks-heartbeat.md` |
 | **Plugins** | TypeScript 扩展 (channels/tools/provider auth/CLI) | `references/tools-browser-plugins.md` |
 | **Nodes** | 设备配对 (canvas/camera/screen/exec) | `references/core-concepts.md` |
+| **多节点组网** | Tailscale 互联、跨地域 master/worker 部署、Node 可见性 | `references/multi-node-networking.md` |
 | **Sandboxing** | Docker 容器隔离 (modes/scopes/workspace access) | `references/sessions-memory-automation-security.md` |
 
 ### Workspace 引导文件
