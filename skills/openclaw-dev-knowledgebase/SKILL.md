@@ -1,6 +1,6 @@
 ---
 name: openclaw-dev-knowledgebase
-description: "Use this skill when the user asks about OpenClaw architecture, development setup, debugging OpenClaw locally or remotely, OpenClaw configuration, Gateway troubleshooting, session logs, channel setup, skill resolution, extension development, building openclaw from source, testing openclaw, releasing openclaw, macOS app, openclaw CLI commands, agent delegation, multi-agent routing, model selection, memory search, cron jobs, heartbeat, hooks, webhooks, browser automation, tool policy, sandboxing, security audit, workspace bootstrap files, node pairing, discovery, or any OpenClaw internals question."
+description: "Use this skill when the user asks about OpenClaw architecture overview, development setup, debugging OpenClaw locally or remotely, OpenClaw configuration, Gateway troubleshooting, session logs, channel setup, building openclaw from source, testing openclaw, releasing openclaw, macOS app, openclaw CLI commands, memory search, cron jobs, heartbeat, hooks, webhooks, browser automation, tool policy, sandboxing, security audit, workspace bootstrap files, node pairing, discovery, networking topology, or general OpenClaw internals questions. For creating agents use openclaw-agent-development; for creating plugins use openclaw-plugin-architecture; for creating skills use openclaw-skill-development; for evolving skills use openclaw-skill-evolution."
 metadata: {"clawdbot":{"always":false,"emoji":"📚"}}
 user-invocable: true
 version: 2.0.0
