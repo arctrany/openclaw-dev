@@ -34,12 +34,14 @@ bash install.sh
 自动检测并安装到：
 | 平台 | 安装位置 | 方式 |
 |------|---------|------|
-| Claude Code | `~/.claude/commands/` | 12 个 /slash 命令 |
+| Claude Code | `~/.claude/commands/` | 3 个 SKILL.md + 12 个 /slash 命令 (薄包装) |
 | Qwen | `~/.qwen/skills/` | 3 个 SKILL.md |
-| Codex | `~/.codex/skills/` | 3 个 SKILL.md + openai.yaml |
-| Gemini | 见下方 | 需要 per-project 安装 |
+| Codex | `~/.codex/skills/` | 3 个 SKILL.md |
+| Gemini | `.agents/skills/` (per-project) | 3 个 SKILL.md |
 
 ### Per-project 安装 (Gemini / 项目级)
+
+Gemini 会在 `install.sh` 运行目录自动检测项目并安装。也可以手动指定：
 
 ```bash
 bash install.sh --project /path/to/your/project
@@ -145,22 +147,28 @@ bash scripts/validate-skill.sh skills/openclaw-skill-development
 ## 架构
 
 ```
-3 Skills (知识层)                12 Commands (动作层)
-─────────────────────           ─────────────────────
-📚 knowledgebase (16 refs)       /diagnose  /lint-config
-   ├─ 核心概念 (5)               /openclaw-status
-   ├─ 开发指南 (4)               /sync-knowledge
-   ├─ 运维参考 (4)
-   ├─ 运行时分析 (2, 活文档)     /create-skill  /deploy-skill
-   └─ 源码参考 (2)              /validate-skill /list-skills
-                                /evolve-skill
-🛠 skill-development (8 refs)
-   ├─ 开发参考 (4)              /setup-node
-   ├─ 调试 (1)                  /scaffold-agent
-   └─ 演化 (3)                  /scaffold-plugin
+3 Skills (SSoT, 全平台共享)       12 Commands (Claude 薄包装)
+──────────────────────────       ─────────────────────────
+📚 knowledgebase                  /diagnose → refs/diagnose-runbook
+   ├─ 核心概念 (5 refs)           /lint-config → refs/lint-config-runbook
+   ├─ 开发指南 (4 refs)           /openclaw-status → refs/status-runbook
+   ├─ 运维参考 (4 refs)           /sync-knowledge → refs/sync-knowledge-runbook
+   ├─ 运行时分析 (2, 活文档)      /scaffold-agent → refs/scaffold-agent-guide
+   ├─ 源码参考 (2 refs)           /scaffold-plugin → refs/scaffold-plugin-guide
+   └─ 操作指南 (3 runbooks)       /list-skills → refs/list-skills-runbook
+                                  /create-skill  /deploy-skill
+🛠 skill-development              /validate-skill /evolve-skill
+   ├─ Phase 1-5 SOP               /setup-node
+   ├─ 示例 + 脚本
+   └─ list-skills runbook
 
-🖥 node-operations (运维 SOP)
+🖥 node-operations
+   ├─ 安装/调试/组网 SOP
+   └─ diagnose / lint / status runbooks
 ```
+
+> **设计原则**: Skill 层是 Single Source of Truth (SSoT)，所有平台共享。
+> Claude 的 /commands 只是薄包装 — 指向 skill references。
 
 ### Skill 分工
 

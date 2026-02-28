@@ -1,0 +1,3 @@
+interface:
+  display_name: "OpenClaw Node Operations"
+  short_description: "Install, configure, debug, and monitor OpenClaw nodes"

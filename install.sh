@@ -108,14 +108,23 @@ install_codex() {
 }
 
 # ─────────────────────────────────────────
-# Gemini (Antigravity) — project-level only
+# Gemini (Antigravity) — per-project install
 # ─────────────────────────────────────────
 install_gemini() {
   [ ! -d "$HOME/.gemini" ] && { echo "  ⏭  Gemini — not detected"; return; }
   echo "  📦 Gemini (Antigravity)"
-  echo "     ℹ️  Gemini requires per-project install:"
-  echo "        bash $SCRIPT_DIR/install.sh --project /path/to/project"
-  INSTALLED=$((INSTALLED + 1))
+
+  # Gemini uses per-project .agents/ directory
+  # Auto-install to current directory if it looks like a project
+  if [ -d ".git" ] || [ -f "package.json" ] || [ -d ".agents" ]; then
+    copy_skills ".agents/skills"
+    echo "     ✅ 3 skills → .agents/skills/"
+    INSTALLED=$((INSTALLED + 1))
+  else
+    echo "     ℹ️  Gemini requires per-project install."
+    echo "        Run from your project root, or use:"
+    echo "        bash $SCRIPT_DIR/install.sh --project /path/to/project"
+  fi
 }
 
 # ─────────────────────────────────────────
