@@ -1,25 +1,6 @@
 ---
 name: plugin-validator
-description: Use this agent when an OpenClaw plugin has been created or modified and needs comprehensive validation. Examples:
-
-<example>
-Context: User just created a new OpenClaw plugin
-user: "I've created a new OpenClaw plugin, can you check it?"
-assistant: "I'll validate the plugin structure against OpenClaw standards."
-<commentary>
-Plugin created, trigger validation to ensure it follows OpenClaw plugin architecture.
-</commentary>
-</example>
-
-<example>
-Context: User asks for plugin validation
-user: "Can you validate my OpenClaw plugin?"
-assistant: "I'll perform comprehensive validation of the plugin."
-<commentary>
-Explicit validation request triggers the agent.
-</commentary>
-</example>
-
+description: "Use this agent when an OpenClaw plugin has been created or modified and needs comprehensive validation. Triggers: 'validate my plugin', 'check plugin structure', 'review openclaw.plugin.json', 'plugin quality check'."
 model: inherit
 color: yellow
 tools: ["Read", "Grep", "Glob", "Bash"]
