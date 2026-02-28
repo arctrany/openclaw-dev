@@ -10,6 +10,14 @@ version: 4.0.0
 
 OpenClaw 全面知识库 — 功能/架构/开发/部署/运维 + plugin API + agent 配置。
 
+> ⛔ **铁律: 不可破坏 Memory**
+> - 绝对不能删除、覆盖、截断 `memory/` 目录下的任何文件和 `MEMORY.md`
+> - 只允许 **append** 操作，不允许 rewrite 或 truncate
+> - 迁移 workspace 时必须完整保留 `memory/` 和 `MEMORY.md`
+>
+> ⛔ **铁律: 遇到问题先跑 `openclaw doctor`**
+> - 任何异常先运行 `openclaw doctor`，它会自动检测并修复常见问题
+
 ## 知识索引
 
 ### 核心概念

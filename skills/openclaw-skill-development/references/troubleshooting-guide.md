@@ -344,7 +344,7 @@ grep -r "^/" <skill-dir>/scripts/
 1. **Absolute paths in scripts**
    ```bash
    # Bad
-   cat /Users/hao/.openclaw/config.json
+   cat /absolute/path/to/.openclaw/config.json
 
    # Good
    cat ~/.openclaw/config.json
@@ -355,7 +355,7 @@ grep -r "^/" <skill-dir>/scripts/
 2. **Hardcoded workspace paths**
    ```bash
    # Bad
-   WORKSPACE="/Users/hao/.openclaw/workspace-momiji"
+   WORKSPACE="/absolute/path/to/.openclaw/workspace-my-agent"
 
    # Good
    WORKSPACE=$(jq -r '.agents.list[] | select(.id=="momiji") | .workspace' ~/.openclaw/openclaw.json)

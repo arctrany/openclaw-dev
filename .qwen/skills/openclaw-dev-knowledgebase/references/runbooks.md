@@ -4,11 +4,11 @@
 
 ---
 
-## Remote Gateway 远程登录 (Tailscale + SSH)
+## 远程 Gateway 登录 (Tailscale + SSH)
 
 ### 前提
 
-- 账号已分配（示例：`<user>`）
+- 账号已分配（示例：`<your-username>`）
 - Tailscale 客户端已安装并加入同一 Tailnet
 - 本地有 SSH 客户端
 
@@ -20,20 +20,20 @@ tailscale status
 
 # 2. 查找目标机器 IP（IP 可能变化，每次确认）
 tailscale status | grep <gateway-host>  # 或向管理员确认当前 IP
-REMOTE_IP="100.x.x.x"              # 替换为实际 IP
+GATEWAY_IP="100.x.x.x"                  # 替换为实际 IP
 
-# 3. SSH 登录
-ssh <user>@$REMOTE_IP
+# 3. SSH 登录 (推荐加 IdentitiesOnly)
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 <your-username>@$GATEWAY_IP
 
-# 3. 检查 OpenClaw 状态
+# 4. 检查 OpenClaw 状态
 openclaw status
+openclaw doctor
 
-# 4. 执行任务
+# 5. 执行任务
 openclaw update
 openclaw models list
-/Users/<user>/remote_check_openclaw.sh
 
-# 5. 退出
+# 6. 退出
 exit
 ```
 
@@ -41,10 +41,12 @@ exit
 
 ```bash
 # 上传
-scp ./local_file <user>@$REMOTE_IP:/Users/<user>/
+scp -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 \
+  ./local_file <your-username>@$GATEWAY_IP:~/
 
 # 下载
-scp <user>@$REMOTE_IP:/Users/<user>/remote_file ./
+scp -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 \
+  <your-username>@$GATEWAY_IP:~/remote_file ./
 ```
 
 ### 安全红线
@@ -62,17 +64,17 @@ scp <user>@$REMOTE_IP:/Users/<user>/remote_file ./
 |------|------|
 | 连接超时 | 确认本地 Tailscale 在线 + 同一 Tailnet + SSH 服务运行 |
 | 权限不足 | 把完整报错发管理员申请授权 |
-| `openclaw` 找不到 | 先 `openclaw status`；仍失败联系管理员检查安装与 PATH |
+| `openclaw` 找不到 | 先 `openclaw doctor`；仍失败联系管理员检查安装与 PATH |
 
 ### 每次登录顺序
 
 1. 连上 Tailscale
 2. `ssh` 登录
-3. `openclaw status`
+3. `openclaw doctor`
 4. 执行任务
 5. `exit` 退出
 
-> 💡 建议管理员配置 SSH 密钥登录，减少密码输入和安全风险
+> 💡 建议配置 SSH 密钥登录 + `IdentitiesOnly=yes`，减少密码输入和安全风险
 
 ---
 
@@ -116,8 +118,10 @@ pkill -TERM openclaw-gateway
 ### 批量部署 Skills 到远程
 
 ```bash
-# rsync 整个 skills 目录
-rsync -avz skills/ <user>@$REMOTE_IP:~/.openclaw/workspace/skills/
+# rsync 整个 skills 目录 (排除 memory)
+rsync -avz --exclude 'memory/' --exclude 'MEMORY.md' \
+  -e "ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519" \
+  skills/ <your-username>@$GATEWAY_IP:~/.openclaw/workspace/skills/
 
 # 然后 SSH 进去发 /new 给 agent，或重启 gateway
 ```

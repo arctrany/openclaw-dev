@@ -531,7 +531,7 @@ Never log or expose the key value.
 **Never hardcode paths**:
 ```bash
 # Bad
-cp skill.md /Users/hao/.openclaw/skills/
+cp skill.md ~/.openclaw/skills/
 
 # Good
 WORKSPACE=$(jq -r ".agents.list[] | select(.id==\"$AGENT_ID\") | .workspace" ~/.openclaw/openclaw.json)

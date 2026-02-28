@@ -96,14 +96,52 @@ fi
 # Expand config path
 CONFIG_PATH=$(eval echo "$CONFIG_PATH")
 
+# SSH helper: hardened ssh wrapper (avoids Too many auth failures)
+ssh_cmd() {
+    ssh -o IdentitiesOnly=yes -o ConnectTimeout=10 -o BatchMode=yes "$REMOTE_HOST" "$@"
+}
+
+# SSH pre-check: layered connectivity test
+ssh_precheck() {
+    echo "🔗 Pre-checking SSH to $REMOTE_HOST..."
+    echo "🖥️ 当前: $(hostname) | $(whoami)"
+
+    # Layer 1: Network
+    if ! nc -zw5 "$(echo "$REMOTE_HOST" | sed 's/.*@//')" 22 2>/dev/null; then
+        echo "❌ Network layer: port 22 unreachable on $(echo "$REMOTE_HOST" | sed 's/.*@//')"
+        echo "   Check: tailscale status, ping, firewall"
+        exit 1
+    fi
+
+    # Layer 2+3: Handshake + Auth
+    if ! ssh_cmd "true" 2>/dev/null; then
+        ERR=$(ssh -o IdentitiesOnly=yes -o ConnectTimeout=10 -o BatchMode=yes "$REMOTE_HOST" "true" 2>&1)
+        if echo "$ERR" | grep -q "Host key"; then
+            echo "❌ Handshake layer: Host key verification failed"
+            echo "   Fix: ssh-keygen -R $(echo "$REMOTE_HOST" | sed 's/.*@//')"
+        elif echo "$ERR" | grep -q "Too many authentication"; then
+            echo "❌ Auth layer: Too many authentication failures"
+            echo "   Fix: ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 $REMOTE_HOST"
+        else
+            echo "❌ Auth layer: $ERR"
+            echo "   Fix: check ~/.ssh/authorized_keys on remote (chmod 700/600)"
+        fi
+        exit 1
+    fi
+    echo "✅ SSH connection OK"
+}
+
 echo "🚀 Deploying skill to agent: $AGENT_ID"
 [ -n "$REMOTE_HOST" ] && echo "📡 Remote host: $REMOTE_HOST"
 echo "📦 Method: $METHOD"
 
+# Pre-check SSH if remote
+[ -n "$REMOTE_HOST" ] && ssh_precheck
+
 # Resolve workspace path from config
 if [ -n "$REMOTE_HOST" ]; then
-    WORKSPACE=$(ssh "$REMOTE_HOST" "jq -r '.agents.list[] | select(.id==\"$AGENT_ID\") | .workspace' $CONFIG_PATH")
-    WORKSPACE=$(ssh "$REMOTE_HOST" "eval echo $WORKSPACE")
+    WORKSPACE=$(ssh_cmd "jq -r '.agents.list[] | select(.id==\"$AGENT_ID\") | .workspace' $CONFIG_PATH")
+    WORKSPACE=$(ssh_cmd "eval echo $WORKSPACE")
 else
     WORKSPACE=$(jq -r ".agents.list[] | select(.id==\"$AGENT_ID\") | .workspace" "$CONFIG_PATH")
     WORKSPACE=$(eval echo "$WORKSPACE")
@@ -125,16 +163,16 @@ case $METHOD in
     rsync)
         if [ -n "$REMOTE_HOST" ]; then
             echo "🔄 Syncing via rsync to $REMOTE_HOST:$TARGET_PATH"
-            rsync -avz --progress "$SKILL_SOURCE/" "$REMOTE_HOST:$TARGET_PATH/"
+            rsync -avz --progress --exclude 'memory/' --exclude 'MEMORY.md' "$SKILL_SOURCE/" "$REMOTE_HOST:$TARGET_PATH/"
         else
             echo "🔄 Syncing locally to $TARGET_PATH"
-            rsync -av "$SKILL_SOURCE/" "$TARGET_PATH/"
+            rsync -av --exclude 'memory/' --exclude 'MEMORY.md' "$SKILL_SOURCE/" "$TARGET_PATH/"
         fi
         ;;
     scp)
         if [ -n "$REMOTE_HOST" ]; then
             echo "📤 Copying via SCP to $REMOTE_HOST:$TARGET_PATH"
-            ssh "$REMOTE_HOST" "mkdir -p $TARGET_PATH"
+            ssh_cmd "mkdir -p $TARGET_PATH"
             scp -r "$SKILL_SOURCE/"* "$REMOTE_HOST:$TARGET_PATH/"
         else
             echo "📂 Copying locally to $TARGET_PATH"
@@ -158,7 +196,7 @@ case $METHOD in
 
         # Pull on remote
         if [ -n "$REMOTE_HOST" ]; then
-            ssh "$REMOTE_HOST" "cd $WORKSPACE && git pull origin main"
+            ssh_cmd "cd $WORKSPACE && git pull origin main"
         else
             cd "$WORKSPACE" && git pull origin main
         fi
@@ -177,7 +215,7 @@ if [ $NO_VERIFY -eq 0 ]; then
     echo "🔍 Verifying deployment..."
 
     if [ -n "$REMOTE_HOST" ]; then
-        if ssh "$REMOTE_HOST" "test -f $TARGET_PATH/SKILL.md"; then
+        if ssh_cmd "test -f $TARGET_PATH/SKILL.md"; then
             echo "✅ SKILL.md exists at $TARGET_PATH"
         else
             echo "⚠️  Warning: SKILL.md not found at $TARGET_PATH"

@@ -9,11 +9,18 @@
 
 ## 流程
 
+### 0. 确认执行环境
+
+⚠️ 每次执行前必须确认"你在哪台机器上"：
+```bash
+echo "🖥️ 当前: $(hostname) | $(whoami) | $(ipconfig getifaddr en0 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}')"
+```
+
 ### 1. 定位日志
 
 ```bash
 HOST="${host:-}"
-CMD="${HOST:+ssh $HOST}"
+CMD="${HOST:+ssh -o IdentitiesOnly=yes -o ConnectTimeout=10 $HOST}"
 
 LOG_DIR=$($CMD bash -c 'echo ${OPENCLAW_LOG_DIR:-~/.openclaw/logs}')
 GATEWAY_LOG="$LOG_DIR/gateway.log"
@@ -34,7 +41,7 @@ UNHANDLED=$($CMD grep -c "UnhandledPromiseRejection\|unhandled" "$ERR_LOG")
 BAK_COUNT=$($CMD ls ~/.openclaw/openclaw.json.bak* 2>/dev/null | wc -l | tr -d ' ')
 ```
 
-### 3. 五维分类
+### 3. 六维分类
 
 读取 `log-analysis-methodology.md` 中的分类方法，执行:
 
@@ -45,6 +52,7 @@ BAK_COUNT=$($CMD ls ~/.openclaw/openclaw.json.bak* 2>/dev/null | wc -l | tr -d '
 | 认证 | `grep -c "No API key\|401\|429"` | 次数 + provider |
 | 工具 | `grep "\[tools\]" \| sort \| uniq -c` | 按工具分类 |
 | 进程 | `grep -c "SIGTERM\|Gateway listening"` | 重启次数 + crash loop 检测 |
+| SSH/远程 | `grep -c "Host key verification\|Too many authentication\|Permission denied"` | 次数 + 目标 host |
 
 ### 4. 模式匹配
 
@@ -87,6 +95,7 @@ BAK_COUNT=$($CMD ls ~/.openclaw/openclaw.json.bak* 2>/dev/null | wc -l | tr -d '
    │ 认证     │ <N>  │ ...    │ No API key: <N>              │
    │ 工具     │ <N>  │ ...    │ exec: <N>, browser: <N>      │
    │ 进程     │ <N>  │ ...    │ crash loop: <Y/N>            │
+   │ SSH/远程 │ <N>  │ ...    │ host key: <N>, auth: <N>     │
    └──────────┴──────┴────────┴──────────────────────────────┘
 
 🔗 已知模式命中

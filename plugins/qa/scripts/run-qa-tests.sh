@@ -128,7 +128,7 @@ log_scene "场景 #2: 模型配置测试"
 log "检查 $AGENT_NAME 的模型配置..."
 
 # 获取主模型
-PRIMARY_MODEL=$(jq -r ".agents.list[] | select(.id==\"$AGENT_NAME\") | .model.primary" /Users/<user>/.openclaw/openclaw.json 2>/dev/null || echo "")
+PRIMARY_MODEL=$(jq -r ".agents.list[] | select(.id==\"$AGENT_NAME\") | .model.primary" ~/.openclaw/openclaw.json 2>/dev/null || echo "")
 if [ -n "$PRIMARY_MODEL" ]; then
   log_success "主模型: $PRIMARY_MODEL"
   test_model_available "$PRIMARY_MODEL"
@@ -139,7 +139,7 @@ else
 fi
 
 # 检查 Fallback 模型
-FALLBACK_COUNT=$(jq -r ".agents.list[] | select(.id==\"$AGENT_NAME\") | .model.fallbacks | length" /Users/<user>/.openclaw/openclaw.json 2>/dev/null || echo "0")
+FALLBACK_COUNT=$(jq -r ".agents.list[] | select(.id==\"$AGENT_NAME\") | .model.fallbacks | length" ~/.openclaw/openclaw.json 2>/dev/null || echo "0")
 if [ "$FALLBACK_COUNT" -gt 0 ]; then
   log_success "Fallback 模型数: $FALLBACK_COUNT"
   ((PASSED_TESTS++))
@@ -149,7 +149,7 @@ else
 fi
 ((TOTAL_TESTS++))
 
-quick_test "OAuth 配置有效" "[ \$(jq -r '.profiles | length' /Users/<user>/.openclaw/agents/main/agent/auth-profiles.json 2>/dev/null || echo 0) -gt 0 ]"
+quick_test "OAuth 配置有效" "[ \$(jq -r '.profiles | length' ~/.openclaw/agents/$AGENT_NAME/agent/auth-profiles.json 2>/dev/null || echo 0) -gt 0 ]"
 echo ""
 
 # ============================================
@@ -356,7 +356,7 @@ echo ""
 # 场景 #10: 自动化运维检查
 # ============================================
 log_scene "场景 #10: 自动化运维"
-quick_test "健康守护脚本存在" "[ -f /Users/<user>/.openclaw/scripts/health-guardian.sh ]"
+quick_test "健康守护脚本存在" "[ -f ~/.openclaw/scripts/health-guardian.sh ]"
 log "检查 Cron 配置..."
 if crontab -l 2>/dev/null | grep -q 'health-guardian'; then
   log_success "Cron 自动运维已配置"

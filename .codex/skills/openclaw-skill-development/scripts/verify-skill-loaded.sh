@@ -80,13 +80,39 @@ fi
 # Expand config path
 CONFIG_PATH=$(eval echo "$CONFIG_PATH")
 
+# SSH helper: hardened ssh wrapper (avoids Too many auth failures)
+ssh_cmd() {
+    ssh -o IdentitiesOnly=yes -o ConnectTimeout=10 -o BatchMode=yes "$REMOTE_HOST" "$@"
+}
+
+# SSH pre-check: layered connectivity test
+ssh_precheck() {
+    echo "🔗 Pre-checking SSH to $REMOTE_HOST..."
+    echo "🖥️ 当前: $(hostname) | $(whoami)"
+    if ! ssh_cmd "true" 2>/dev/null; then
+        ERR=$(ssh -o IdentitiesOnly=yes -o ConnectTimeout=10 -o BatchMode=yes "$REMOTE_HOST" "true" 2>&1)
+        if echo "$ERR" | grep -q "Host key"; then
+            echo "❌ Host key verification failed → ssh-keygen -R $(echo "$REMOTE_HOST" | sed 's/.*@//')"
+        elif echo "$ERR" | grep -q "Too many authentication"; then
+            echo "❌ Too many auth failures → add -o IdentitiesOnly=yes -i <key>"
+        else
+            echo "❌ SSH failed: $ERR"
+            echo "   Check: ~/.ssh/authorized_keys permissions (700/600)"
+        fi
+        exit 1
+    fi
+}
+
 echo "🔍 Verifying skill: $SKILL_NAME"
 echo "🤖 Agent: $AGENT_ID"
 [ -n "$REMOTE_HOST" ] && echo "📡 Remote host: $REMOTE_HOST"
 
+# Pre-check SSH if remote
+[ -n "$REMOTE_HOST" ] && ssh_precheck
+
 # Resolve agent directory from config
 if [ -n "$REMOTE_HOST" ]; then
-    AGENT_DIR=$(ssh "$REMOTE_HOST" "echo \$HOME/.openclaw/agents/$AGENT_ID")
+    AGENT_DIR=$(ssh_cmd "echo \$HOME/.openclaw/agents/$AGENT_ID")
 else
     AGENT_DIR="$HOME/.openclaw/agents/$AGENT_ID"
 fi
@@ -95,7 +121,7 @@ echo "📂 Agent directory: $AGENT_DIR"
 
 # Check if agent directory exists
 if [ -n "$REMOTE_HOST" ]; then
-    if ! ssh "$REMOTE_HOST" "test -d $AGENT_DIR"; then
+    if ! ssh_cmd "test -d $AGENT_DIR"; then
         echo "❌ Error: Agent directory not found: $AGENT_DIR"
         echo "   Agent may not exist or hasn't started yet"
         exit 1
@@ -112,7 +138,7 @@ fi
 SESSION_FILE="$AGENT_DIR/sessions/sessions.json"
 
 if [ -n "$REMOTE_HOST" ]; then
-    if ! ssh "$REMOTE_HOST" "test -f $SESSION_FILE"; then
+    if ! ssh_cmd "test -f $SESSION_FILE"; then
         echo "⚠️  Warning: No session file found at $SESSION_FILE"
         echo "   Agent may not have any active sessions yet"
         exit 1
@@ -129,7 +155,7 @@ fi
 echo "🔎 Checking session snapshot..."
 
 if [ -n "$REMOTE_HOST" ]; then
-    FOUND=$(ssh "$REMOTE_HOST" "cat $SESSION_FILE | python3 -c \"
+    FOUND=$(ssh_cmd "cat $SESSION_FILE | python3 -c \"
 import sys, json
 data = json.load(sys.stdin)
 session = data.get('agent:$AGENT_ID:main', {})
