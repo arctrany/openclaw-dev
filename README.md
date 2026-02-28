@@ -136,39 +136,40 @@ OpenClaw 的 session 模型是怎么工作的？
 ```
 → agent 应触发 `openclaw-skill-development` skill，走 Phase 1-5 流程
 
-### 验证脚本
+### 验证
 ```bash
-# 验证 skill 文件完整性
-bash scripts/validate-skill.sh skills/openclaw-dev-knowledgebase
-bash scripts/validate-skill.sh skills/openclaw-node-operations
-bash scripts/validate-skill.sh skills/openclaw-skill-development
+# 验证 skill 文件完整性 (使用 skill-development 内置脚本)
+for s in skills/openclaw-*/; do
+  head -10 "$s/SKILL.md" | grep -q '^name:' && echo "✅ $(basename $s)" || echo "❌ $(basename $s)"
+done
 ```
+
+## 项目结构
+
+```
+openclaw-dev/
+├── skills/                  ⭐ 核心 — 3 个 skill (唯一事实源)
+│   ├── openclaw-dev-knowledgebase/   架构/原理/知识库
+│   ├── openclaw-node-operations/     安装/调试/运维
+│   └── openclaw-skill-development/   Skill 开发 SOP
+├── commands/                📋 跨平台命令 (install.sh 分发)
+├── install.sh / uninstall.sh
+└── README.md
+```
+
+**安装后自动生成的平台目录** (不需手动维护):
+```
+.agents/skills/ + .agents/workflows/   → Gemini
+.codex/skills/                         → Codex
+.qwen/skills/                          → Qwen
+.claude/commands/ + .claude/agents/    → Claude Code
+```
+
+> `commands/` 里的 12 个命令会被 install.sh 自动分发到各平台：
+> Claude → `.claude/commands/`，Gemini → `.agents/workflows/`。
+> Codex 和 Qwen 通过 skills 直接获得同等能力。
 
 ## 架构
-
-```
-3 Skills (SSoT, 全平台共享)       12 Commands (Claude 薄包装)
-──────────────────────────       ─────────────────────────
-📚 knowledgebase                  /diagnose → refs/diagnose-runbook
-   ├─ 核心概念 (5 refs)           /lint-config → refs/lint-config-runbook
-   ├─ 开发指南 (4 refs)           /openclaw-status → refs/status-runbook
-   ├─ 运维参考 (4 refs)           /sync-knowledge → refs/sync-knowledge-runbook
-   ├─ 运行时分析 (2, 活文档)      /scaffold-agent → refs/scaffold-agent-guide
-   ├─ 源码参考 (2 refs)           /scaffold-plugin → refs/scaffold-plugin-guide
-   └─ 操作指南 (3 runbooks)       /list-skills → refs/list-skills-runbook
-                                  /create-skill  /deploy-skill
-🛠 skill-development              /validate-skill /evolve-skill
-   ├─ Phase 1-5 SOP               /setup-node
-   ├─ 示例 + 脚本
-   └─ list-skills runbook
-
-🖥 node-operations
-   ├─ 安装/调试/组网 SOP
-   └─ diagnose / lint / status runbooks
-```
-
-> **设计原则**: Skill 层是 Single Source of Truth (SSoT)，所有平台共享。
-> Claude 的 /commands 只是薄包装 — 指向 skill references。
 
 ### Skill 分工
 
