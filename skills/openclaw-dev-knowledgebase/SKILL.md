@@ -40,6 +40,13 @@ OpenClaw 全面知识库 — 功能/架构/开发/部署/运维 + plugin API + a
 | 网络模型 | `references/networking.md` |
 | 操作手册 (Runbooks) | `references/runbooks.md` |
 
+### 运行时分析 (活文档)
+
+| 主题 | 参考文件 |
+|------|---------|
+| **日志分析方法论** (5 步系统分析) | `references/log-analysis-methodology.md` |
+| **故障模式库** (已知模式签名, agent 可追加) | `references/fault-patterns.md` |
+
 ### 源码参考
 
 | 主题 | 参考文件 |
