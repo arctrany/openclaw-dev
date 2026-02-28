@@ -14,6 +14,10 @@ version: 3.0.0
 > - 只允许 **append** 操作，不允许 rewrite 或 truncate
 > - 迁移 workspace 时必须完整保留 `memory/` 和 `MEMORY.md`
 > - 任何涉及 workspace 目录的 `rm -rf`、`rsync --delete` 必须排除 `memory/`
+>
+> ⛔ **铁律: 遇到问题先跑 `openclaw doctor`**
+> - 任何异常（Gateway 不启动、Agent 不响应、Skill 不加载、Channel 断连）先运行 `openclaw doctor`
+> - doctor 会自动检测并修复常见问题，输出结果后再决定下一步
 
 ## 安装
 

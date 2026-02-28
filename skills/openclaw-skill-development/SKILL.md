@@ -15,6 +15,10 @@ Follow this process for every OpenClaw skill development task. No shortcuts.
 > - 只允许 **append** 操作，不允许 rewrite 或 truncate
 > - 部署 skill 时 `rsync --delete` 必须排除 `memory/`
 > - 迁移 workspace 时必须完整保留 `memory/` 和 `MEMORY.md`
+>
+> ⛔ **铁律: 遇到问题先跑 `openclaw doctor`**
+> - Skill 不加载、Gateway 不启动、部署失败 — 先运行 `openclaw doctor`
+> - doctor 会自动检测并修复常见问题，输出结果后再决定下一步
 
 ## Architecture Overview
 
