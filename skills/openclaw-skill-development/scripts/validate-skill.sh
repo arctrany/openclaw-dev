@@ -65,20 +65,38 @@ if [ -z "$SKILL_DIR" ]; then
     exit 1
 fi
 
-# Function to run commands locally or remotely
+# Function to run commands locally or remotely (hardened SSH)
 run_cmd() {
     if [ -n "$REMOTE_HOST" ]; then
-        ssh "$REMOTE_HOST" "$@"
+        ssh -o IdentitiesOnly=yes -o ConnectTimeout=10 -o BatchMode=yes "$REMOTE_HOST" "$@"
     else
         eval "$@"
     fi
 }
 
+# SSH pre-check if remote
+if [ -n "$REMOTE_HOST" ]; then
+    echo "🖥️ 当前: $(hostname) | $(whoami)"
+    echo "🔗 Pre-checking SSH to $REMOTE_HOST..."
+    if ! run_cmd "true" 2>/dev/null; then
+        ERR=$(ssh -o IdentitiesOnly=yes -o ConnectTimeout=10 -o BatchMode=yes "$REMOTE_HOST" "true" 2>&1)
+        if echo "$ERR" | grep -q "Host key"; then
+            echo "❌ Host key verification failed → ssh-keygen -R $(echo "$REMOTE_HOST" | sed 's/.*@//')"
+        elif echo "$ERR" | grep -q "Too many authentication"; then
+            echo "❌ Too many auth failures → add -o IdentitiesOnly=yes -i <key>"
+        else
+            echo "❌ SSH failed: $ERR"
+            echo "   Check: ~/.ssh/authorized_keys permissions (700/600)"
+        fi
+        exit 1
+    fi
+fi
+
 # Resolve skill directory if agent ID provided
 if [ -n "$AGENT_ID" ]; then
     if [ -n "$REMOTE_HOST" ]; then
-        WORKSPACE=$(ssh "$REMOTE_HOST" "jq -r '.agents.list[] | select(.id==\"$AGENT_ID\") | .workspace' ~/.openclaw/openclaw.json")
-        WORKSPACE=$(ssh "$REMOTE_HOST" "eval echo $WORKSPACE")
+        WORKSPACE=$(run_cmd "jq -r '.agents.list[] | select(.id==\"$AGENT_ID\") | .workspace' ~/.openclaw/openclaw.json")
+        WORKSPACE=$(run_cmd "eval echo $WORKSPACE")
     else
         WORKSPACE=$(jq -r ".agents.list[] | select(.id==\"$AGENT_ID\") | .workspace" ~/.openclaw/openclaw.json)
         WORKSPACE=$(eval echo "$WORKSPACE")

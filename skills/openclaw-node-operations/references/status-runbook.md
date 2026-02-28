@@ -8,11 +8,17 @@
 
 ## 执行逻辑
 
+### 0. 确认执行环境
+
+```bash
+echo "🖥️ 当前: $(hostname) | $(whoami) | $(ipconfig getifaddr en0 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}')"
+```
+
 ### 1. 确定连接方式
 
 ```bash
 if [ -n "$HOST" ]; then
-  CMD="ssh $HOST"
+  CMD="ssh -o IdentitiesOnly=yes -o ConnectTimeout=10 $HOST"
 else
   CMD=""
 fi
@@ -99,6 +105,6 @@ done'
 ```bash
 for host in mac-cn mac-sg; do
   echo "=== $host ==="
-  ssh $host "openclaw status --deep"
+  ssh -o IdentitiesOnly=yes -o ConnectTimeout=10 $host "openclaw status --deep"
 done
 ```

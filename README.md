@@ -4,6 +4,47 @@
 
 一个 skill 包 — 安装到 Claude Code / Qwen / Codex / Gemini，你的 code agent 就能开发、调试、运维、优化 OpenClaw。
 
+## 快速安装
+
+**一句话安装（在项目根目录运行）：**
+
+```bash
+git clone https://github.com/arctrany/openclaw-dev.git && cd openclaw-dev && bash install.sh
+```
+
+自动检测已安装的 code agent 并安装到所有平台。
+
+**单平台一句话安装：**
+
+| 平台 | 一句话安装 |
+|------|-----------|
+| **Claude Code** | `git clone https://github.com/arctrany/openclaw-dev.git && cd openclaw-dev && bash install.sh` |
+| **Gemini** | `git clone https://github.com/arctrany/openclaw-dev.git && cd openclaw-dev && bash install.sh --project /path/to/project` |
+| **Qwen** | 同上（自动检测 `~/.qwen/`） |
+| **Codex** | 同上（自动检测 `~/.codex/`） |
+
+**更新：**
+
+```bash
+cd openclaw-dev && git pull && bash install.sh
+```
+
+**安装后验证（任意 agent 中）：**
+
+```
+帮我安装 OpenClaw    → 应触发 node-operations skill
+OpenClaw 架构原理    → 应触发 knowledgebase skill
+创建一个 skill       → 应触发 skill-development skill
+```
+
+## 特点
+
+- **跨平台**: 同一套 skill，Claude Code / Qwen / Codex / Gemini 都能用
+- **一句话安装**: `git clone ... && bash install.sh` 自动检测所有已安装 agent
+- **活知识**: `fault-patterns.md` 是活文档，agent 每次诊断后会追加新发现
+- **闭环进化**: 分析 → 发现模式 → 沉淀 → 下次分析更精准
+- **正交设计**: 3 个 skill 分工明确（知识/开发/运维），12 个 command 不重叠
+
 ## 为什么需要这个？
 
 Code agent 本身不懂 OpenClaw 的架构、API、运维方法。安装 openclaw-dev 后，它就知道：
@@ -13,47 +54,6 @@ Code agent 本身不懂 OpenClaw 的架构、API、运维方法。安装 opencla
 - 怎么诊断 Gateway 故障（从日志到根因）
 - 怎么从运行数据中发现优化点
 - 每次诊断发现的新模式会自动沉淀，**越用越精准**
-
-## 特点
-
-- **跨平台**: 同一套 skill，Claude Code / Qwen / Codex / Gemini 都能用
-- **活知识**: `fault-patterns.md` 是活文档，agent 每次诊断后会追加新发现
-- **闭环进化**: 分析 → 发现模式 → 沉淀 → 下次分析更精准
-- **正交设计**: 3 个 skill 分工明确（知识/开发/运维），12 个 command 不重叠
-
-## 安装
-
-### 一键安装到所有已安装的 code agent
-
-```bash
-git clone https://github.com/arctrany/openclaw-dev.git
-cd openclaw-dev
-bash install.sh
-```
-
-自动检测并安装到：
-| 平台 | 安装位置 | 方式 |
-|------|---------|------|
-| Claude Code | `~/.claude/commands/` | 3 个 SKILL.md + 12 个 /slash 命令 (薄包装) |
-| Qwen | `~/.qwen/skills/` | 3 个 SKILL.md |
-| Codex | `~/.codex/skills/` | 3 个 SKILL.md |
-| Gemini | `.agents/skills/` (per-project) | 3 个 SKILL.md |
-
-### Per-project 安装 (Gemini / 项目级)
-
-Gemini 会在 `install.sh` 运行目录自动检测项目并安装。也可以手动指定：
-
-```bash
-bash install.sh --project /path/to/your/project
-```
-
-### 更新
-
-```bash
-cd openclaw-dev && git pull && bash install.sh
-```
-
-## 使用场景
 
 安装后，在你的 code agent 里直接用自然语言或 /命令 操作 OpenClaw：
 

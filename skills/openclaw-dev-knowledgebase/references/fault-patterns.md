@@ -105,6 +105,95 @@
 
 ---
 
+## Onboarding 阶段故障
+
+### Node.js 版本不兼容
+- **签名**: `Unsupported Node.js version` / `engine "node" is incompatible`
+- **根因**: 系统自带或 brew 安装的 Node.js 版本过老 (< 22)
+- **影响**: 安装失败或 Gateway 无法启动
+- **修复**: `node -v` 检查版本; 安装 Node 22+: `brew install node@22` 或 `nvm install 22`
+- **预防**: `install.sh` 会自动安装 Node 22，手动安装时注意版本
+- **首次发现**: 2026-02-28
+
+### Port 18789 被占用
+- **签名**: `EADDRINUSE: address already in use :::18789`
+- **根因**: 旧 Gateway 进程未退出、其他应用占用、或多 profile 端口冲突
+- **影响**: Gateway 无法启动，onboard 最后一步失败
+- **修复**:
+  1. `lsof -i :18789` 找到占用进程
+  2. `kill <PID>` 或 `openclaw gateway stop`
+  3. 或换端口: `openclaw gateway --port 19000`
+- **预防**: onboard 前先 `lsof -i :18789` 确认端口空闲
+- **首次发现**: 2026-02-28
+
+### API Key 无效/过期
+- **签名**: `401 Unauthorized` / `Invalid API key` / `No API key found for provider`
+- **根因**: 粘贴 key 时多了空格/换行、key 被 revoke、或选错 provider
+- **影响**: Gateway 运行但 Agent 无法回复消息
+- **修复**:
+  1. `openclaw models status` 检查 auth 状态
+  2. 重新配置: `openclaw configure` → 重新输入 API key
+  3. 在 provider 后台 (console.anthropic.com) 确认 key 有效
+- **预防**: 粘贴后 `openclaw health` 立即验证
+- **首次发现**: 2026-02-28
+
+### Onboard 中途断开
+- **签名**: 部分配置写入但 Gateway 未安装
+- **根因**: 终端意外关闭、SSH 断连、Ctrl+C 中断
+- **影响**: 配置文件不完整，Gateway 不启动
+- **修复**: 重新运行 `openclaw onboard --install-daemon` (幂等，会跳过已完成步骤)
+- **预防**: 使用 `tmux` 或 `screen` 在远程机器上运行 onboard
+- **首次发现**: 2026-02-28
+
+---
+
+## SSH / 远程连接层故障
+
+### Host key verification failed
+- **签名**: `Host key verification failed` / `REMOTE HOST IDENTIFICATION HAS CHANGED`
+- **根因**: 目标机器重装系统、IP 复用、或 Tailscale IP 变更后 `~/.ssh/known_hosts` 中的指纹不匹配
+- **影响**: SSH 连接被客户端拒绝，所有远程操作 (deploy-skill, diagnose 等) 全部失败
+- **修复**:
+  1. `ssh-keygen -R <host-ip>` 精准删除旧指纹 (不要删整个 known_hosts)
+  2. 重新连接并确认新指纹: `ssh -o StrictHostKeyChecking=ask user@host`
+- **预防**: 重装系统后主动通知所有客户端更新指纹; 记录各节点公钥指纹到运维文档
+- **首次发现**: 2026-02-28
+
+### Too many authentication failures
+- **签名**: `Too many authentication failures` / `Received disconnect from ... Too many authentication failures`
+- **根因**: SSH agent 中加载了过多密钥 (3-5 个以上)，客户端逐个尝试直到服务器断开连接 (默认 `MaxAuthTries=6`)
+- **影响**: 即使正确密钥存在也无法登录，常与 Host key 报错混杂导致排查方向被干扰
+- **修复**:
+  1. 客户端连接时强制指定单密钥: `ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 user@host`
+  2. 或在 `~/.ssh/config` 中配置:
+     ```
+     Host gateway-*
+       IdentitiesOnly yes
+       IdentityFile ~/.ssh/id_ed25519
+     ```
+  3. 清理 SSH agent 多余密钥: `ssh-add -D && ssh-add ~/.ssh/id_ed25519`
+- **预防**: 所有 OpenClaw 脚本和文档中的 ssh 调用统一加 `IdentitiesOnly=yes`
+- **首次发现**: 2026-02-28
+
+### authorized_keys 权限错误
+- **签名**: `Permission denied (publickey)` + 服务端 `/var/log/auth.log` 显示 `Authentication refused: bad ownership or modes`
+- **根因**: `~/.ssh/authorized_keys` 文件权限不是 600，或 `~/.ssh` 目录权限不是 700，或所有者不正确
+- **关联症状**: 网络层和握手层全部正常，只有认证失败 — 这是最常见的 SSH 根因
+- **影响**: 公钥认证被 sshd 静默拒绝，客户端只看到 `Permission denied`
+- **修复**:
+  1. 修复权限:
+     ```bash
+     chmod 700 ~/.ssh
+     chmod 600 ~/.ssh/authorized_keys
+     chown -R $(whoami):staff ~/.ssh   # macOS
+     ```
+  2. 确认 authorized_keys 内容是完整单行公钥 (无换行、无多余空格)
+  3. 本机回环验证: `ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 $(whoami)@127.0.0.1`
+- **预防**: 用 `ssh-copy-id` 而非手动复制; 写入后立即验证权限
+- **首次发现**: 2026-02-28
+
+---
+
 ## Rate Limit / 配额
 
 ### LLM API 限流

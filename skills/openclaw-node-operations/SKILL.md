@@ -2,7 +2,7 @@
 name: openclaw-node-operations
 description: "Use this skill when asked to install OpenClaw, set up a node, configure a Gateway, onboard a new machine, debug OpenClaw issues (read logs, run doctor, health checks, diagnose faults), fix Gateway problems, set up networking (Tailscale, SSH tunnels), check node status, troubleshoot connectivity, configure remote access, deploy on Linux/Windows/macOS, lint config, validate openclaw.json, check fleet status, query agent/channel/plugin status, or run systematic diagnostics. Also use for: 'diagnose OpenClaw', 'lint my config', 'validate configuration', 'show status', 'fleet status', 'Gateway health', 'check OpenClaw health'. Covers hands-on operations: installation, onboarding, Gateway service management, remote access, cross-OS support, debugging, monitoring, diagnostics, config validation. For architecture/theory questions use openclaw-dev-knowledgebase instead."
 metadata: {"clawdbot":{"always":false,"emoji":"🖥️"}}
-version: 2.0.0
+version: 3.0.0
 ---
 
 # OpenClaw Node Operations
@@ -70,13 +70,77 @@ netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=18789 conn
 
 ## Onboarding
 
+### 交互式引导
+
 ```bash
-openclaw onboard                    # 交互式
-openclaw onboard --install-daemon   # 含 Gateway 服务安装
-openclaw configure                  # 仅配置
+openclaw onboard --install-daemon   # 推荐：含 Gateway 服务安装
+openclaw onboard                    # 不安装 Gateway 服务
+openclaw configure                  # 仅配置（已安装过 OpenClaw）
 ```
 
-Onboard 流程：设置 workspace → 配置 model provider → 创建 auth profile → 安装 Gateway 服务 → 配置 channels
+`openclaw onboard` 会依次询问：
+
+| 步骤 | 问题 | 推荐选择 | 说明 |
+|------|------|---------|------|
+| 1 | Workspace 路径 | 默认 `~/.openclaw/workspace` | 直接回车 |
+| 2 | Model provider | **Anthropic** | 最稳定，原生支持 |
+| 3 | API Key | 从 [console.anthropic.com](https://console.anthropic.com) 获取 | 粘贴即可 |
+| 4 | Model | **claude-sonnet-4-5** | 性价比最优 |
+| 5 | Gateway daemon | **Yes** | 开机自启，后台常驻 |
+| 6 | Channel | 首次可 **跳过** | 后续单独配 |
+
+> 💡 如果没有 Anthropic API Key，可用 [OpenRouter](https://openrouter.ai) 获取免费额度试用。
+
+### Onboard 完成后 → 第一步
+
+```bash
+# 1. 验证 Gateway 运行
+openclaw health
+
+# 2. 打开 WebChat (零配置，内置)
+open http://127.0.0.1:18789/    # macOS
+# 或浏览器打开 http://127.0.0.1:18789/
+
+# 3. 发送 "你好" → 应收到 Agent 回复
+# 这证明: Gateway ✅ Model ✅ Auth ✅ Agent ✅
+```
+
+## 快速体验 (5 分钟)
+
+最快路径 — 从零到跟 Agent 对话：
+
+```bash
+# 1. 安装 (自动装 Node.js + OpenClaw)
+curl -fsSL https://openclaw.ai/install.sh | bash
+
+# 2. Onboard (选 Anthropic + claude-sonnet-4-5 + 装 Gateway)
+openclaw onboard --install-daemon
+
+# 3. 验证
+openclaw health
+
+# 4. 体验! 打开 WebChat
+open http://127.0.0.1:18789/   # macOS
+# 发送 "你好" 🎉
+```
+
+### 接下来: 选一个 Channel
+
+| 难度 | Channel | 配置方式 | 耗时 |
+|------|---------|---------|------|
+| ⭐ | **WebChat** | 零配置，已内置 | 0 分钟 |
+| ⭐⭐ | **Telegram** | 从 @BotFather 获取 token → 配置 | 5 分钟 |
+| ⭐⭐⭐ | **WhatsApp** | QR 配对，功能最全 | 10 分钟 |
+| ⭐⭐⭐ | **Discord** | 创建 Bot Application → 配置 | 15 分钟 |
+
+```bash
+# 配置 Channel (以 Telegram 为例)
+# 1. Telegram 中找 @BotFather → /newbot → 获取 token
+# 2. 设置 token:
+openclaw channels add telegram --token "<your-bot-token>"
+# 3. 验证:
+openclaw channels status --probe
+```
 
 ## Gateway 管理
 
@@ -109,12 +173,51 @@ openclaw --profile rescue gateway --port 19001
 ### SSH 隧道
 
 ```bash
-# 从笔记本连到远程 Gateway
-ssh -N -L 18789:127.0.0.1:18789 user@gateway-host &
+# 从笔记本连到远程 Gateway (推荐加 IdentitiesOnly 和指定密钥)
+ssh -N -L 18789:127.0.0.1:18789 \
+  -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 \
+  user@gateway-host &
 
 # 然后本地 CLI 直连
 openclaw health
 openclaw status --deep
+```
+
+### SSH 排障 (分层方法)
+
+⚠️ **每次远程操作前，先确认当前执行环境**：
+```bash
+echo "🖥️ 当前: $(hostname) | $(whoami) | $(ipconfig getifaddr en0 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}')"
+```
+
+SSH 故障分层排查顺序：**网络层 → 握手层 → 认证层**
+
+| 层级 | 检查命令 | 正常输出 | 异常说明 |
+|------|---------|---------|---------|
+| **网络层** | `tailscale ping <host>` 或 `nc -zv <host> 22` | `Open` / `pong` | Tailscale 离线或防火墙 |
+| **握手层** | `ssh -v user@host 2>&1 \| head -20` | `SSH-2.0-OpenSSH` | `Host key verification failed` → 修指纹 |
+| **认证层** | `ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 user@host` | 登录成功 | `Permission denied` → 查 authorized_keys |
+
+### SSH 最佳实践
+
+```bash
+# 1. 始终使用 IdentitiesOnly + 指定密钥 (避免 Too many authentication failures)
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 user@host
+
+# 2. Host key 冲突时精准清除 (不要删整个 known_hosts)
+ssh-keygen -R <host-ip>
+
+# 3. 远程机器 authorized_keys 权限必须严格
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+chown -R $(whoami):staff ~/.ssh   # macOS
+# chown -R $(whoami):$(whoami) ~/.ssh  # Linux
+
+# 4. 本机回环验证 (确认 sshd + authorized_keys 同时工作)
+ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 $(whoami)@127.0.0.1
+
+# 5. 成功后记录公钥指纹 (后续可快速对比)
+ssh-keygen -lf ~/.ssh/id_ed25519.pub
 ```
 
 ### Tailscale
@@ -178,10 +281,13 @@ openclaw plugins doctor             # Plugin 诊断
 | npm EACCES (Linux) | `npm config get prefix` | `install-cli.sh` 安装到 `~/.openclaw` |
 | openclaw 命令找不到 | `which openclaw` | 检查 PATH |
 | WSL portproxy 失效 | `netsh interface portproxy show all` | WSL IP 变化后需重新配置 |
+| SSH Host key 报错 | `ssh -v user@host 2>&1 \| grep "Host key"` | `ssh-keygen -R <host>` 清除旧指纹 |
+| SSH Too many auth failures | `ssh -v user@host 2>&1 \| grep -c "Offering"` | 加 `-o IdentitiesOnly=yes -i <key>` |
+| SSH Permission denied | `ssh -o IdentitiesOnly=yes -i <key> user@host` | 检查远程 `~/.ssh/authorized_keys` 权限 (700/600) |
 
 ## 组网
 
-详见 `references/multi-node-networking.md`：
+详见 `openclaw-dev-knowledgebase` 的 `references/multi-node-networking.md`：
 
 - Tailscale 互联 (跨地域加密隧道)
 - 单 Gateway + 远程 Node 拓扑
