@@ -1,147 +1,190 @@
 # openclaw-dev
 
-跨平台 Agent Skill 包 — 安装到代码 Agent（Claude Code / Gemini / Codex / Qwen），让它们具备开发、调试、扩展 [OpenClaw](https://github.com/nicepkg/openclaw) 的能力。
+**让你的 Code Agent 具备 OpenClaw 全栈开发能力。**
+
+一个 skill 包 — 安装到 Claude Code / Qwen / Codex / Gemini，你的 code agent 就能开发、调试、运维、优化 OpenClaw。
+
+## 为什么需要这个？
+
+Code agent 本身不懂 OpenClaw 的架构、API、运维方法。安装 openclaw-dev 后，它就知道：
+
+- 怎么安装 OpenClaw（macOS/Linux/Windows）
+- 怎么创建 agent、skill、plugin
+- 怎么诊断 Gateway 故障（从日志到根因）
+- 怎么从运行数据中发现优化点
+- 每次诊断发现的新模式会自动沉淀，**越用越精准**
+
+## 特点
+
+- **跨平台**: 同一套 skill，Claude Code / Qwen / Codex / Gemini 都能用
+- **活知识**: `fault-patterns.md` 是活文档，agent 每次诊断后会追加新发现
+- **闭环进化**: 分析 → 发现模式 → 沉淀 → 下次分析更精准
+- **正交设计**: 3 个 skill 分工明确（知识/开发/运维），12 个 command 不重叠
+
+## 安装
+
+### 一键安装到所有已安装的 code agent
+
+```bash
+git clone https://github.com/arctrany/openclaw-dev.git
+cd openclaw-dev
+bash install.sh
+```
+
+自动检测并安装到：
+| 平台 | 安装位置 | 方式 |
+|------|---------|------|
+| Claude Code | `~/.claude/commands/` | 12 个 /slash 命令 |
+| Qwen | `~/.qwen/skills/` | 3 个 SKILL.md |
+| Codex | `~/.codex/skills/` | 3 个 SKILL.md + openai.yaml |
+| Gemini | 见下方 | 需要 per-project 安装 |
+
+### Per-project 安装 (Gemini / 项目级)
+
+```bash
+bash install.sh --project /path/to/your/project
+```
+
+### 更新
+
+```bash
+cd openclaw-dev && git pull && bash install.sh
+```
+
+## 使用场景
+
+安装后，在你的 code agent 里直接用自然语言或 /命令 操作 OpenClaw：
+
+### 场景 1: 初始化一台新机器
 
 ```
-openclaw-dev (知识载体)
-    ↓ 安装到
-Claude Code / Gemini / Codex / Qwen (代码 agent 平台)
-    ↓ agent 利用这些知识去
-开发 / 调试 / 扩展 / 优化 OpenClaw
+帮我在这台 Linux 服务器上安装 OpenClaw，配置 Gateway 和 Tailscale
+```
+
+Agent 会自动读取 `node-operations` skill，按步骤执行安装、onboard、Gateway 服务配置、Tailscale 组网。
+
+### 场景 2: Gateway 出问题了
+
+```
+OpenClaw Gateway 频繁重启，帮我诊断
+```
+
+Agent 会：
+1. 读取 `log-analysis-methodology.md`，按 5 步方法论分析日志
+2. 对照 `fault-patterns.md` 中的已知模式（如 crash loop 签名）
+3. 定位根因并给出修复步骤
+4. **新发现的模式会追加到 `fault-patterns.md`**，下次更快
+
+### 场景 3: 开发一个新 skill
+
+```
+帮我给 momiji agent 创建一个语音播报技能
+```
+
+Agent 会走完 `skill-development` 的 Phase 1-5：需求 → 设计 → 实现 → 验证 → 部署。
+
+### 场景 4: 修改配置前先检查
+
+```
+/lint-config
+```
+
+Agent 验证 `openclaw.json` 的语法、必要字段、安全设置、路径可达性。防止手动编辑导致全员 Agent 挂掉。
+
+### 场景 5: 看看整体运行状态
+
+```
+/openclaw-status
+```
+
+输出 Gateway、Agents、Channels、Plugins、Sessions 的统一状态视图。
+
+### 场景 6: 从运行数据优化 skill
+
+```
+/evolve-skill momiji voice-engine
+```
+
+Agent 分析 momiji 的 session 日志，找到 voice-engine skill 的触发率、错误率、改进方向。
+
+## 测试
+
+安装后，打开对应的 code agent，发送以下测试指令：
+
+### Claude Code
+```
+/diagnose          # 应识别为 openclaw 诊断命令
+/lint-config       # 应执行配置验证
+/list-skills       # 应列出 openclaw 技能
+```
+
+### Qwen / Codex / Gemini
+```
+请帮我安装 OpenClaw
+```
+→ agent 应自动触发 `openclaw-node-operations` skill，给出跨平台安装步骤
+
+```
+OpenClaw 的 session 模型是怎么工作的？
+```
+→ agent 应触发 `openclaw-dev-knowledgebase` skill，引用 core-concepts.md
+
+```
+帮我创建一个新的 OpenClaw skill
+```
+→ agent 应触发 `openclaw-skill-development` skill，走 Phase 1-5 流程
+
+### 验证脚本
+```bash
+# 验证 skill 文件完整性
+bash scripts/validate-skill.sh skills/openclaw-dev-knowledgebase
+bash scripts/validate-skill.sh skills/openclaw-node-operations
+bash scripts/validate-skill.sh skills/openclaw-skill-development
 ```
 
 ## 架构
 
 ```
-Skills (知识/方法论)                Commands (动作)
-─────────────────────            ─────────────────────
-knowledgebase (ALL 知识)          /sync-knowledge  (更新知识)
-  14 references                  /openclaw-status (查状态)
+3 Skills (知识层)                12 Commands (动作层)
+─────────────────────           ─────────────────────
+📚 knowledgebase (16 refs)       /diagnose  /lint-config
+   ├─ 核心概念 (5)               /openclaw-status
+   ├─ 开发指南 (4)               /sync-knowledge
+   ├─ 运维参考 (4)
+   ├─ 运行时分析 (2, 活文档)     /create-skill  /deploy-skill
+   └─ 源码参考 (2)              /validate-skill /list-skills
+                                /evolve-skill
+🛠 skill-development (8 refs)
+   ├─ 开发参考 (4)              /setup-node
+   ├─ 调试 (1)                  /scaffold-agent
+   └─ 演化 (3)                  /scaffold-plugin
 
-skill-development (技能生命周期)   /create-skill    (创建)
-  8 references                   /deploy-skill    (部署)
-                                 /validate-skill  (验证)
-                                 /list-skills     (列表)
-                                 /evolve-skill    (演化)
-
-node-operations (节点运维)         /setup-node      (初始化)
-                                 /scaffold-agent  (搭建 agent)
-                                 /scaffold-plugin (搭建 plugin)
+🖥 node-operations (运维 SOP)
 ```
 
-## 一键安装
+### Skill 分工
 
-### 自动安装（推荐）
+| Skill | 触发词 | 职责 |
+|-------|--------|------|
+| `knowledgebase` | "架构", "原理", "怎么工作" | 理论/内部原理 |
+| `node-operations` | "安装", "调试", "修复" | 动手操作/运维 |
+| `skill-development` | "创建 skill", "部署", "演化" | 开发方法论 |
 
-```bash
-# 自动检测已安装的全局平台 (Claude Code / Codex)
-./install.sh
-
-# 安装到指定项目 (Gemini / Qwen，项目级安装)
-./install.sh --project ~/your-project
-
-# 安装所有平台
-./install.sh --all --project ~/your-project
-
-# 预览操作（不实际执行）
-./install.sh --dry-run --project ~/your-project
-
-# 只安装到指定平台
-./install.sh --platforms claude,gemini --project ~/your-project
-```
-
-### 卸载
-
-```bash
-# 自动检测并卸载
-./uninstall.sh
-
-# 从项目卸载
-./uninstall.sh --project ~/your-project
-
-# 从所有平台卸载
-./uninstall.sh --all --project ~/your-project
-```
-
-### 手动安装
-
-#### Claude Code
-
-```bash
-ln -s /path/to/openclaw-dev ~/.claude/plugins/openclaw-dev
-```
-
-#### Gemini Antigravity
-
-```bash
-# 将 skill 链接到项目目录
-mkdir -p /path/to/project/.agents/skills
-ln -s /path/to/openclaw-dev/skills/openclaw-dev-knowledgebase /path/to/project/.agents/skills/
-ln -s /path/to/openclaw-dev/skills/openclaw-skill-development /path/to/project/.agents/skills/
-ln -s /path/to/openclaw-dev/skills/openclaw-node-operations   /path/to/project/.agents/skills/
-```
-
-#### Codex CLI
-
-```bash
-# 链接 skills 目录
-mkdir -p ~/.codex
-ln -s /path/to/openclaw-dev/skills ~/.codex/openclaw-dev-skills
-
-# 在 ~/.codex/instructions.md 中添加引用
-cat >> ~/.codex/instructions.md << 'EOF'
-## OpenClaw Development Skills
-Skills are available at `~/.codex/openclaw-dev-skills/`. Read the SKILL.md files when asked about OpenClaw.
-EOF
-```
-
-#### Qwen Code
-
-```bash
-# 将 skill 链接到项目目录
-mkdir -p /path/to/project/.qwen/skills
-ln -s /path/to/openclaw-dev/skills/openclaw-dev-knowledgebase /path/to/project/.qwen/skills/
-ln -s /path/to/openclaw-dev/skills/openclaw-skill-development /path/to/project/.qwen/skills/
-ln -s /path/to/openclaw-dev/skills/openclaw-node-operations   /path/to/project/.qwen/skills/
-```
-
-#### 远程代码 Agent
-
-```bash
-rsync -avz skills/ user@remote:<agent-skills-dir>/
-```
-
-## 平台支持矩阵
-
-| 平台 | 安装方式 | Skill 目录 | 安装类型 |
-|------|---------|-----------|---------|
-| Claude Code | symlink 整包 | `~/.claude/plugins/` | 全局 |
-| Codex CLI | symlink + instructions.md | `~/.codex/` | 全局 |
-| Gemini Antigravity | symlink 各 skill | `<project>/.agents/skills/` | 项目级 |
-| Qwen Code | symlink 各 skill | `<project>/.qwen/skills/` | 项目级 |
-
-## 项目结构
+### 闭环
 
 ```
-openclaw-dev/
-├── install.sh                         # 一键安装脚本
-├── uninstall.sh                       # 卸载脚本
-├── skills/                            # 3 个 skills
-│   ├── openclaw-dev-knowledgebase/      # ALL 知识 (14 references)
-│   ├── openclaw-skill-development/      # 技能生命周期 (8 references)
-│   └── openclaw-node-operations/        # 节点运维 SOP
-├── commands/                          # 10 个 commands
-├── agents/                            # 2 个 subagent
-├── scripts/                           # 验证脚本
-└── plugins/qa/                        # QA 测试工具
+/diagnose → 分析日志 → 匹配已知模式 → 发现新模式 → 追加 fault-patterns.md
+                                                         ↓
+                                              下次 /diagnose 命中率更高
 ```
 
 ## 跨 OS 支持
 
-| 平台 | 安装命令 |
-|------|---------|
-| macOS / Linux | `curl -fsSL https://openclaw.ai/install.sh \| bash` |
-| Windows (WSL2) | `iwr -useb https://openclaw.ai/install.ps1 \| iex` |
+| 平台 | OpenClaw 安装 |
+|------|-------------|
+| macOS | `curl -fsSL https://openclaw.ai/install.sh \| bash` |
+| Linux | `curl -fsSL https://openclaw.ai/install.sh \| bash` |
+| Windows | WSL2 + `iwr -useb https://openclaw.ai/install.ps1 \| iex` |
 
 ## License
 
