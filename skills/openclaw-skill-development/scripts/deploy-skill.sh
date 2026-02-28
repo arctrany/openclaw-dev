@@ -163,10 +163,10 @@ case $METHOD in
     rsync)
         if [ -n "$REMOTE_HOST" ]; then
             echo "🔄 Syncing via rsync to $REMOTE_HOST:$TARGET_PATH"
-            rsync -avz --progress "$SKILL_SOURCE/" "$REMOTE_HOST:$TARGET_PATH/"
+            rsync -avz --progress --exclude 'memory/' --exclude 'MEMORY.md' "$SKILL_SOURCE/" "$REMOTE_HOST:$TARGET_PATH/"
         else
             echo "🔄 Syncing locally to $TARGET_PATH"
-            rsync -av "$SKILL_SOURCE/" "$TARGET_PATH/"
+            rsync -av --exclude 'memory/' --exclude 'MEMORY.md' "$SKILL_SOURCE/" "$TARGET_PATH/"
         fi
         ;;
     scp)

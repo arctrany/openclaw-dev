@@ -10,6 +10,12 @@ version: 3.0.0
 
 Follow this process for every OpenClaw skill development task. No shortcuts.
 
+> ⛔ **铁律: 不可破坏 Memory**
+> - 绝对不能删除、覆盖、截断 `memory/` 目录下的任何文件和 `MEMORY.md`
+> - 只允许 **append** 操作，不允许 rewrite 或 truncate
+> - 部署 skill 时 `rsync --delete` 必须排除 `memory/`
+> - 迁移 workspace 时必须完整保留 `memory/` 和 `MEMORY.md`
+
 ## Architecture Overview
 
 OpenClaw skills are modular capability packages defined by a `SKILL.md` file. They are loaded into an agent's system prompt to extend its capabilities.

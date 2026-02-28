@@ -9,6 +9,12 @@ version: 3.0.0
 
 节点的安装、配置、调试、组网、监控、诊断。
 
+> ⛔ **铁律: 不可破坏 Memory**
+> - 绝对不能删除、覆盖、截断 `memory/` 目录下的任何文件和 `MEMORY.md`
+> - 只允许 **append** 操作，不允许 rewrite 或 truncate
+> - 迁移 workspace 时必须完整保留 `memory/` 和 `MEMORY.md`
+> - 任何涉及 workspace 目录的 `rm -rf`、`rsync --delete` 必须排除 `memory/`
+
 ## 安装
 
 ### 快速安装（推荐）
