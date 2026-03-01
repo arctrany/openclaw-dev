@@ -5,5 +5,8 @@
   "author": {
     "name": "Hao Wu"
   },
+  "repository": "https://github.com/arctrany/openclaw-dev",
+  "license": "MIT",
+  "homepage": "https://github.com/arctrany/openclaw-dev#readme",
   "keywords": ["openclaw", "clawdbot", "skill", "development", "agent", "plugin", "toolkit", "scaffolding"]
 }

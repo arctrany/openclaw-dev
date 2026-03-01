@@ -1,3 +1,0 @@
-interface:
-  display_name: "OpenClaw Knowledgebase"
-  short_description: "OpenClaw architecture, plugin API, agent config, and internals reference"

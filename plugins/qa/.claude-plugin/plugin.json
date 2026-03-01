@@ -1,0 +1,9 @@
+{
+  "name": "qa",
+  "version": "1.0.1",
+  "description": "OpenClaw QA testing framework for capability diagnostics, regression checks, and continuous monitoring.",
+  "author": {
+    "name": "OpenClaw Dev"
+  },
+  "keywords": ["openclaw", "qa", "diagnostics", "testing", "monitoring"]
+}

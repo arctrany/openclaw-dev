@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "defaults": {
+    "agent": "annie",
+    "thinking_by_complexity": {
+      "low": "low",
+      "medium": "medium",
+      "high": "high"
+    },
+    "thinking_by_value": {
+      "normal": "medium",
+      "high": "high"
+    }
+  },
+  "rules": [
+    {
+      "id": "sensitive_research_to_adm",
+      "priority": 100,
+      "when": {
+        "task_type": ["deep_research"],
+        "sensitivity": ["sensitive_research"]
+      },
+      "agent": "adm"
+    },
+    {
+      "id": "normal_research_domestic_to_adm",
+      "priority": 110,
+      "when": {
+        "task_type": ["deep_research"],
+        "sensitivity": ["normal"],
+        "provider_preference": ["domestic_first"]
+      },
+      "agent": "adm"
+    },
+    {
+      "id": "coding_domestic_high_value_to_adm",
+      "priority": 120,
+      "when": {
+        "task_type": ["coding"],
+        "provider_preference": ["domestic_first"],
+        "scene": ["work"]
+      },
+      "agent": "adm",
+      "notes": [
+        "Routes domestic-first research/coding to adm."
+      ]
+    }
+  ]
+}

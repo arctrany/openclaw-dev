@@ -1,0 +1,646 @@
+{
+  "version": 2,
+  "defaults": {
+    "scene": "work",
+    "sensitivity": "normal",
+    "task_type": "planning",
+    "modality": "text",
+    "complexity": "medium",
+    "value": "normal",
+    "context_size": "short",
+    "language": "en",
+    "latency_budget": "balanced",
+    "cost_budget": "balanced",
+    "privacy_requirement": "normal",
+    "provider_preference": "neutral"
+  },
+  "models": {
+    "local-proxy/gemini-3.1-pro": {
+      "provider": "local-proxy",
+      "capabilities": ["text", "image", "multimodal", "long_context", "reasoning_high"],
+      "risk_tags": ["private_allowed", "sensitive_research_allowed"],
+      "cost_tier": "high",
+      "latency_tier": "mid"
+    },
+    "local-proxy/gemini-3.1-pro-preview": {
+      "provider": "local-proxy",
+      "capabilities": ["text", "image", "multimodal", "long_context", "reasoning_high"],
+      "risk_tags": ["private_allowed", "sensitive_research_allowed"],
+      "cost_tier": "high",
+      "latency_tier": "mid"
+    },
+    "local-proxy/gemini-2.5-pro": {
+      "provider": "local-proxy",
+      "capabilities": ["text", "image", "multimodal", "reasoning_mid"],
+      "risk_tags": ["private_allowed", "sensitive_research_allowed"],
+      "cost_tier": "mid",
+      "latency_tier": "mid"
+    },
+    "local-proxy/gemini-2.5-flash": {
+      "provider": "local-proxy",
+      "capabilities": ["text", "image", "multimodal", "batch_fast"],
+      "risk_tags": ["private_allowed", "sensitive_research_allowed"],
+      "cost_tier": "low",
+      "latency_tier": "fast"
+    },
+    "local-proxy/gemini-3-flash": {
+      "provider": "local-proxy",
+      "capabilities": ["text", "image", "multimodal", "batch_fast", "long_context"],
+      "risk_tags": ["private_allowed", "sensitive_research_allowed"],
+      "cost_tier": "low",
+      "latency_tier": "fast"
+    },
+    "local-proxy/claude-opus-4-6-thinking": {
+      "provider": "local-proxy",
+      "capabilities": ["text", "image", "reasoning_high"],
+      "risk_tags": ["work_high_value"],
+      "cost_tier": "high",
+      "latency_tier": "slow"
+    },
+    "local-proxy/claude-sonnet-4-5-thinking": {
+      "provider": "local-proxy",
+      "capabilities": ["text", "image", "reasoning_mid"],
+      "risk_tags": ["general_work"],
+      "cost_tier": "mid",
+      "latency_tier": "mid"
+    },
+    "openai-codex/gpt-5.3-codex": {
+      "provider": "openai-codex",
+      "capabilities": ["text", "image", "coding_strong", "reasoning_high"],
+      "risk_tags": ["private_allowed", "sensitive_research_allowed"],
+      "cost_tier": "high",
+      "latency_tier": "mid"
+    },
+    "bailian/glm-5": {
+      "provider": "bailian",
+      "capabilities": ["text", "coding_strong", "zh_strong", "reasoning_high"],
+      "risk_tags": ["domestic_leading"],
+      "cost_tier": "mid",
+      "latency_tier": "mid"
+    },
+    "bailian/qwen3.5-plus": {
+      "provider": "bailian",
+      "capabilities": ["text", "coding_strong", "batch_fast", "zh_strong", "long_context"],
+      "risk_tags": ["domestic_leading"],
+      "cost_tier": "low",
+      "latency_tier": "fast"
+    },
+    "bailian/qwen3-coder-plus": {
+      "provider": "bailian",
+      "capabilities": ["text", "coding_strong", "batch_fast"],
+      "risk_tags": ["domestic_leading"],
+      "cost_tier": "low",
+      "latency_tier": "fast"
+    },
+    "moonshot/kimi-2.5": {
+      "provider": "moonshot",
+      "capabilities": ["text", "coding_strong", "reasoning_high", "zh_strong"],
+      "risk_tags": ["domestic_leading"],
+      "cost_tier": "mid",
+      "latency_tier": "mid"
+    },
+    "minimax/minimax-m2.5": {
+      "provider": "minimax",
+      "capabilities": ["text", "coding_strong", "batch_fast", "zh_strong"],
+      "risk_tags": ["domestic_leading"],
+      "cost_tier": "mid",
+      "latency_tier": "mid"
+    },
+    "minimax/minimax-m2.5-highspeed": {
+      "provider": "minimax",
+      "capabilities": ["text", "batch_fast", "zh_strong"],
+      "risk_tags": ["domestic_leading"],
+      "cost_tier": "low",
+      "latency_tier": "fast"
+    },
+    "zai/glm-4.7": {
+      "provider": "zai",
+      "capabilities": ["text", "zh_strong", "reasoning_mid"],
+      "risk_tags": ["zh_specialized"],
+      "cost_tier": "mid",
+      "latency_tier": "mid"
+    },
+    "google-antigravity/claude-sonnet-4-5": {
+      "provider": "google-antigravity",
+      "capabilities": ["text", "image", "reasoning_mid"],
+      "risk_tags": ["general_work"],
+      "cost_tier": "mid",
+      "latency_tier": "mid"
+    }
+  },
+  "slots": {
+    "work.frontier_reasoning": {
+      "description": "High-value complex work decisions",
+      "candidates": [
+        "local-proxy/claude-opus-4-6-thinking",
+        "openai-codex/gpt-5.3-codex",
+        "bailian/glm-5",
+        "local-proxy/gemini-3.1-pro"
+      ]
+    },
+    "work.general_fast": {
+      "description": "General work speed/cost balanced",
+      "candidates": [
+        "local-proxy/gemini-3-flash",
+        "local-proxy/gemini-2.5-flash",
+        "local-proxy/claude-sonnet-4-5-thinking",
+        "zai/glm-4.7"
+      ]
+    },
+    "work.long_context": {
+      "description": "Large context analysis",
+      "candidates": [
+        "local-proxy/gemini-3.1-pro",
+        "bailian/qwen3.5-plus"
+      ]
+    },
+    "private.general": {
+      "description": "Private general tasks",
+      "candidates": [
+        "local-proxy/gemini-2.5-flash",
+        "local-proxy/gemini-3-flash",
+        "local-proxy/gemini-2.5-pro"
+      ]
+    },
+    "private.complex": {
+      "description": "Private high-value/complex tasks",
+      "candidates": [
+        "local-proxy/gemini-3.1-pro",
+        "openai-codex/gpt-5.3-codex",
+        "local-proxy/gemini-2.5-pro"
+      ]
+    },
+    "private.text_ops": {
+      "description": "Private text cleanup/summarization",
+      "candidates": [
+        "local-proxy/gemini-2.5-pro",
+        "local-proxy/gemini-2.5-flash"
+      ]
+    },
+    "research.sensitive.primary": {
+      "description": "Sensitive deep research primary investigation",
+      "candidates": [
+        "local-proxy/gemini-3.1-pro",
+        "local-proxy/gemini-2.5-pro"
+      ]
+    },
+    "research.sensitive.text_ops": {
+      "description": "Sensitive research text processing and extraction",
+      "candidates": [
+        "local-proxy/gemini-2.5-pro",
+        "local-proxy/gemini-2.5-flash",
+        "local-proxy/gemini-3-flash"
+      ]
+    },
+    "research.sensitive.synthesis": {
+      "description": "Sensitive research high-value synthesis",
+      "candidates": [
+        "openai-codex/gpt-5.3-codex",
+        "local-proxy/gemini-3.1-pro"
+      ]
+    },
+    "research.normal.domestic": {
+      "description": "Domestic-first non-sensitive research",
+      "candidates": [
+        "bailian/glm-5",
+        "bailian/qwen3.5-plus",
+        "moonshot/kimi-2.5",
+        "minimax/minimax-m2.5"
+      ]
+    },
+    "research.normal.escalation": {
+      "description": "Escalation for research depth/quality",
+      "candidates": [
+        "local-proxy/gemini-3.1-pro",
+        "openai-codex/gpt-5.3-codex"
+      ]
+    },
+    "coding.domestic_default": {
+      "description": "Default domestic-first coding pool",
+      "candidates": [
+        "bailian/qwen3.5-plus",
+        "bailian/glm-5",
+        "moonshot/kimi-2.5",
+        "minimax/minimax-m2.5",
+        "bailian/qwen3-coder-plus"
+      ]
+    },
+    "coding.critical": {
+      "description": "Critical/complex coding escalation",
+      "candidates": [
+        "openai-codex/gpt-5.3-codex",
+        "local-proxy/claude-opus-4-6-thinking",
+        "local-proxy/gemini-3.1-pro"
+      ]
+    },
+    "coding.long_context": {
+      "description": "Large context codebase analysis",
+      "candidates": [
+        "local-proxy/gemini-3.1-pro",
+        "bailian/qwen3.5-plus"
+      ]
+    },
+    "writing.longform": {
+      "description": "Long-form writing and reports",
+      "candidates": [
+        "local-proxy/gemini-3.1-pro",
+        "local-proxy/claude-opus-4-6-thinking",
+        "openai-codex/gpt-5.3-codex"
+      ]
+    },
+    "writing.text_ops": {
+      "description": "Rewrite, summarize, compress",
+      "candidates": [
+        "local-proxy/gemini-2.5-pro",
+        "local-proxy/gemini-2.5-flash",
+        "local-proxy/gemini-3-flash"
+      ]
+    },
+    "writing.cn": {
+      "description": "Chinese writing/localization (non-sensitive)",
+      "candidates": [
+        "bailian/glm-5",
+        "zai/glm-4.7",
+        "bailian/qwen3.5-plus"
+      ]
+    },
+    "data.analysis.complex": {
+      "description": "Complex data interpretation and reasoning",
+      "candidates": [
+        "openai-codex/gpt-5.3-codex",
+        "bailian/glm-5",
+        "local-proxy/gemini-3.1-pro"
+      ]
+    },
+    "data.analysis.batch": {
+      "description": "Batch extraction/classification",
+      "candidates": [
+        "bailian/qwen3.5-plus",
+        "minimax/minimax-m2.5-highspeed",
+        "local-proxy/gemini-3-flash"
+      ]
+    },
+    "data.analysis.long_context": {
+      "description": "Long reports / long tables / many files",
+      "candidates": [
+        "local-proxy/gemini-3.1-pro",
+        "bailian/qwen3.5-plus"
+      ]
+    },
+    "vision.analysis": {
+      "description": "Image understanding, OCR, screenshot debugging",
+      "candidates": [
+        "local-proxy/gemini-3.1-pro",
+        "local-proxy/claude-opus-4-6-thinking"
+      ]
+    },
+    "vision.complex_reasoning": {
+      "description": "High-value multimodal reasoning",
+      "candidates": [
+        "local-proxy/gemini-3.1-pro",
+        "local-proxy/claude-opus-4-6-thinking",
+        "openai-codex/gpt-5.3-codex"
+      ]
+    },
+    "audio.postprocess": {
+      "description": "Post-transcription summary and cleanup",
+      "candidates": [
+        "local-proxy/gemini-2.5-pro",
+        "local-proxy/gemini-3.1-pro",
+        "local-proxy/gemini-2.5-flash"
+      ]
+    },
+    "ops.fast": {
+      "description": "Operational triage and quick diagnostics",
+      "candidates": [
+        "local-proxy/gemini-3-flash",
+        "local-proxy/gemini-2.5-flash",
+        "bailian/qwen3.5-plus"
+      ]
+    },
+    "ops.risk_review": {
+      "description": "High-risk changes or operational review",
+      "candidates": [
+        "openai-codex/gpt-5.3-codex",
+        "local-proxy/claude-opus-4-6-thinking",
+        "bailian/glm-5"
+      ]
+    },
+    "batch.extraction": {
+      "description": "High-throughput extraction/crawling",
+      "candidates": [
+        "bailian/qwen3.5-plus",
+        "minimax/minimax-m2.5-highspeed",
+        "local-proxy/gemini-3-flash"
+      ]
+    },
+    "batch.schema_inference": {
+      "description": "Schema inference / difficult extraction patterns",
+      "candidates": [
+        "bailian/glm-5",
+        "openai-codex/gpt-5.3-codex",
+        "local-proxy/gemini-3.1-pro"
+      ]
+    }
+  },
+  "constraints": [
+    {
+      "id": "ban_bailian_qwen_for_intimate",
+      "when": {
+        "sensitivity": ["intimate"]
+      },
+      "ban_providers": ["bailian", "qwen"],
+      "ban_model_prefixes": ["bailian/", "qwen-"],
+      "reason": "Private/intimate content should not route to Bailian/Qwen by default."
+    },
+    {
+      "id": "ban_bailian_qwen_for_sensitive_research",
+      "when": {
+        "sensitivity": ["sensitive_research"]
+      },
+      "ban_providers": ["bailian", "qwen"],
+      "ban_model_prefixes": ["bailian/", "qwen-"],
+      "reason": "Sensitive research should avoid providers with restrictive moderation behavior."
+    },
+    {
+      "id": "strict_private_prefers_local_proxy",
+      "when": {
+        "scene": ["private"],
+        "privacy_requirement": ["strict"]
+      },
+      "prefer_providers": ["local-proxy", "openai-codex"],
+      "reason": "Strict private mode should prioritize local-proxy and explicitly allowed providers."
+    }
+  ],
+  "route_rules": [
+    {
+      "id": "private_intimate_general",
+      "priority": 100,
+      "when": {
+        "scene": ["private"],
+        "sensitivity": ["intimate"]
+      },
+      "stages": [
+        {"name": "primary", "slot": "private.general"},
+        {"name": "text_ops", "slot": "private.text_ops"}
+      ],
+      "notes": ["Private/intimate route uses local-proxy Gemini defaults."]
+    },
+    {
+      "id": "private_complex_or_high_value",
+      "priority": 110,
+      "when_any": [
+        {"scene": ["private"], "complexity": ["high"]},
+        {"scene": ["private"], "value": ["high"]}
+      ],
+      "stages": [
+        {"name": "primary", "slot": "private.complex"},
+        {"name": "text_ops", "slot": "private.text_ops"}
+      ]
+    },
+    {
+      "id": "sensitive_deep_research",
+      "priority": 200,
+      "when": {
+        "task_type": ["deep_research"],
+        "sensitivity": ["sensitive_research"]
+      },
+      "stages": [
+        {"name": "primary", "slot": "research.sensitive.primary"},
+        {"name": "text_ops", "slot": "research.sensitive.text_ops"},
+        {"name": "synthesis", "slot": "research.sensitive.synthesis"}
+      ],
+      "notes": ["Use non-Bailian providers for sensitive/adult research by default."]
+    },
+    {
+      "id": "research_normal_domestic_first",
+      "priority": 210,
+      "when": {
+        "task_type": ["deep_research"],
+        "sensitivity": ["normal"],
+        "provider_preference": ["domestic_first"]
+      },
+      "stages": [
+        {"name": "primary", "slot": "research.normal.domestic"},
+        {"name": "escalation", "slot": "research.normal.escalation"}
+      ]
+    },
+    {
+      "id": "coding_domestic_first_default",
+      "priority": 300,
+      "when_any": [
+        {"task_type": ["coding"]},
+        {"task_type": ["coding"], "provider_preference": ["domestic_first"]}
+      ],
+      "stages": [
+        {"name": "primary", "slot": "coding.domestic_default"}
+      ]
+    },
+    {
+      "id": "coding_add_long_context_stage",
+      "priority": 310,
+      "when": {
+        "task_type": ["coding"],
+        "context_size": ["long", "huge"]
+      },
+      "augment_stages": [
+        {"name": "context_analysis", "slot": "coding.long_context", "position": "prepend"}
+      ]
+    },
+    {
+      "id": "coding_add_critical_stage",
+      "priority": 320,
+      "when_any": [
+        {"task_type": ["coding"], "complexity": ["high"]},
+        {"task_type": ["coding"], "value": ["high"]}
+      ],
+      "augment_stages": [
+        {"name": "critical_reasoning", "slot": "coding.critical", "position": "prepend"}
+      ],
+      "notes": ["Escalate complex/critical coding to Codex 5.3 first."]
+    },
+    {
+      "id": "writing_high_value",
+      "priority": 400,
+      "when_any": [
+        {"task_type": ["writing"], "complexity": ["high"]},
+        {"task_type": ["writing"], "value": ["high"]}
+      ],
+      "stages": [
+        {"name": "primary", "slot": "writing.longform"},
+        {"name": "text_ops", "slot": "writing.text_ops"}
+      ]
+    },
+    {
+      "id": "writing_general",
+      "priority": 410,
+      "when": {
+        "task_type": ["writing"]
+      },
+      "stages": [
+        {"name": "primary", "slot": "writing.text_ops"}
+      ]
+    },
+    {
+      "id": "writing_zh_non_sensitive",
+      "priority": 420,
+      "when": {
+        "task_type": ["writing"],
+        "language": ["zh"],
+        "sensitivity": ["normal"],
+        "provider_preference": ["domestic_first"]
+      },
+      "augment_stages": [
+        {"name": "cn_localization", "slot": "writing.cn", "position": "append"}
+      ]
+    },
+    {
+      "id": "data_analysis_complex",
+      "priority": 500,
+      "when_any": [
+        {"task_type": ["data_analysis"], "complexity": ["high"]},
+        {"task_type": ["data_analysis"], "value": ["high"]}
+      ],
+      "stages": [
+        {"name": "analysis", "slot": "data.analysis.complex"}
+      ]
+    },
+    {
+      "id": "data_analysis_batch",
+      "priority": 510,
+      "when": {
+        "task_type": ["data_analysis"],
+        "latency_budget": ["fast"]
+      },
+      "augment_stages": [
+        {"name": "batch", "slot": "data.analysis.batch", "position": "append"}
+      ]
+    },
+    {
+      "id": "data_analysis_long_context",
+      "priority": 520,
+      "when": {
+        "task_type": ["data_analysis"],
+        "context_size": ["long", "huge"]
+      },
+      "augment_stages": [
+        {"name": "long_context", "slot": "data.analysis.long_context", "position": "prepend"}
+      ]
+    },
+    {
+      "id": "multimedia_vision_complex",
+      "priority": 600,
+      "when_any": [
+        {"task_type": ["multimedia"], "modality": ["image", "multimodal"], "complexity": ["high"]},
+        {"task_type": ["multimedia"], "modality": ["image", "multimodal"], "value": ["high"]}
+      ],
+      "stages": [
+        {"name": "vision_reasoning", "slot": "vision.complex_reasoning"}
+      ]
+    },
+    {
+      "id": "multimedia_vision_general",
+      "priority": 610,
+      "when": {
+        "task_type": ["multimedia"],
+        "modality": ["image", "multimodal"]
+      },
+      "stages": [
+        {"name": "vision_analysis", "slot": "vision.analysis"}
+      ]
+    },
+    {
+      "id": "multimedia_audio_postprocess",
+      "priority": 620,
+      "when": {
+        "task_type": ["multimedia"],
+        "modality": ["audio"]
+      },
+      "stages": [
+        {"name": "postprocess", "slot": "audio.postprocess"}
+      ]
+    },
+    {
+      "id": "ops_risk_review",
+      "priority": 700,
+      "when_any": [
+        {"task_type": ["ops"], "complexity": ["high"]},
+        {"task_type": ["ops"], "value": ["high"]}
+      ],
+      "stages": [
+        {"name": "review", "slot": "ops.risk_review"}
+      ]
+    },
+    {
+      "id": "ops_fast",
+      "priority": 710,
+      "when": {
+        "task_type": ["ops"]
+      },
+      "stages": [
+        {"name": "triage", "slot": "ops.fast"}
+      ]
+    },
+    {
+      "id": "batch_extraction_general",
+      "priority": 800,
+      "when": {
+        "task_type": ["batch_extraction"]
+      },
+      "stages": [
+        {"name": "batch", "slot": "batch.extraction"}
+      ]
+    },
+    {
+      "id": "batch_extraction_schema",
+      "priority": 810,
+      "when_any": [
+        {"task_type": ["batch_extraction"], "complexity": ["high"]},
+        {"task_type": ["batch_extraction"], "value": ["high"]}
+      ],
+      "augment_stages": [
+        {"name": "schema_inference", "slot": "batch.schema_inference", "position": "prepend"}
+      ]
+    },
+    {
+      "id": "work_high_value_complex_default",
+      "priority": 20,
+      "when_any": [
+        {"scene": ["work"], "complexity": ["high"]},
+        {"scene": ["work"], "value": ["high"]}
+      ],
+      "stages": [
+        {"name": "primary", "slot": "work.frontier_reasoning"}
+      ]
+    },
+    {
+      "id": "work_long_context_overlay",
+      "priority": 30,
+      "when": {
+        "scene": ["work"],
+        "context_size": ["long", "huge"]
+      },
+      "augment_stages": [
+        {"name": "context", "slot": "work.long_context", "position": "prepend"}
+      ]
+    },
+    {
+      "id": "work_general_default",
+      "priority": 10,
+      "when": {
+        "scene": ["work"]
+      },
+      "stages": [
+        {"name": "primary", "slot": "work.general_fast"}
+      ]
+    },
+    {
+      "id": "global_fallback_default",
+      "priority": 0,
+      "when": {},
+      "stages": [
+        {"name": "primary", "slot": "work.general_fast"}
+      ]
+    }
+  ]
+}

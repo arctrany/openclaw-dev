@@ -18,5 +18,8 @@ node_modules/
 __pycache__/
 *.pyc
 
-# Claude Code local settings
-.claude/*.local.md
+# Generated platform directories (created by install.sh)
+.claude/
+.agents/
+.codex/
+.qwen/

@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "sensitive_research_long_high",
+      "labels": {
+        "scene": "work",
+        "task_type": "deep_research",
+        "sensitivity": "sensitive_research",
+        "complexity": "high",
+        "value": "high",
+        "context_size": "long"
+      },
+      "assertions": {
+        "primary_in": [
+          "local-proxy/gemini-3.1-pro",
+          "local-proxy/gemini-3.1-pro-preview",
+          "local-proxy/gemini-2.5-pro"
+        ],
+        "blocked_providers_contains": ["bailian", "qwen"],
+        "must_not_include_prefixes": ["bailian/", "qwen-"],
+        "stage_slots_include": [
+          "research.sensitive.primary",
+          "research.sensitive.text_ops",
+          "research.sensitive.synthesis"
+        ]
+      }
+    },
+    {
+      "id": "private_intimate_strict",
+      "labels": {
+        "scene": "private",
+        "task_type": "writing",
+        "sensitivity": "intimate",
+        "privacy_requirement": "strict",
+        "complexity": "medium",
+        "value": "normal"
+      },
+      "assertions": {
+        "blocked_providers_contains": ["bailian", "qwen"],
+        "must_not_include_prefixes": ["bailian/", "qwen-"],
+        "primary_in_prefixes": ["local-proxy/"]
+      }
+    },
+    {
+      "id": "coding_domestic_high_complex",
+      "labels": {
+        "scene": "work",
+        "task_type": "coding",
+        "provider_preference": "domestic_first",
+        "complexity": "high",
+        "value": "high",
+        "context_size": "long"
+      },
+      "assertions": {
+        "stage_slots_include": [
+          "coding.critical",
+          "coding.long_context",
+          "coding.domestic_default"
+        ],
+        "list_includes": [
+          "openai-codex/gpt-5.3-codex",
+          "bailian/qwen3.5-plus",
+          "bailian/glm-5"
+        ]
+      }
+    },
+    {
+      "id": "research_normal_domestic_first",
+      "labels": {
+        "scene": "work",
+        "task_type": "deep_research",
+        "sensitivity": "normal",
+        "provider_preference": "domestic_first",
+        "complexity": "medium",
+        "value": "normal"
+      },
+      "assertions": {
+        "stage_slots_include": [
+          "research.normal.domestic",
+          "research.normal.escalation"
+        ],
+        "primary_in": [
+          "bailian/glm-5",
+          "bailian/qwen3.5-plus",
+          "moonshot/kimi-2.5",
+          "minimax/minimax-m2.5"
+        ]
+      }
+    }
+  ]
+}
