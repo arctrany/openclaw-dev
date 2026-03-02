@@ -1,0 +1,95 @@
+name: 🐛 Bug Report / 缺陷报告
+description: Report a bug with openclaw-dev skills, commands, or installation.
+title: "[Bug] "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！请尽量填写以下信息，方便我们定位问题。
+        Thanks for reporting! Please fill in as much detail as possible.
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Agent 平台 / Agent Platform
+      description: 你使用的 Code Agent 平台
+      options:
+        - Claude Code
+        - Qwen Code
+        - Codex CLI
+        - Gemini (Antigravity)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: 操作系统 / OS
+      options:
+        - macOS
+        - Linux (Ubuntu/Debian)
+        - Linux (CentOS/RHEL)
+        - Linux (Other)
+        - Windows (WSL2)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: skill
+    attributes:
+      label: 涉及的 Skill
+      description: 问题涉及哪个 skill？
+      options:
+        - openclaw-dev-knowledgebase
+        - openclaw-node-operations
+        - openclaw-skill-development
+        - model-routing-governor
+        - install.sh / uninstall.sh
+        - Not sure / 不确定
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述 / Description
+      description: 清晰地描述你遇到的问题
+      placeholder: |
+        1. 我执行了什么命令/操作
+        2. 期望的结果
+        3. 实际的结果
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 重现步骤 / Steps to Reproduce
+      description: 如何重现问题？
+      placeholder: |
+        1. 安装 openclaw-dev: `bash install.sh`
+        2. 在 Agent 中发送: "..."
+        3. 观察到错误: ...
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 错误日志 / Error Logs
+      description: 粘贴相关日志或错误信息
+      render: shell
+
+  - type: textarea
+    id: env
+    attributes:
+      label: 环境信息 / Environment
+      description: |
+        其它有助于定位的信息。可选：
+        - OpenClaw 版本
+        - Agent 版本
+        - Shell 类型 (bash/zsh/fish)
+      placeholder: |
+        - OpenClaw version: x.x.x
+        - Agent version: x.x
+        - Shell: zsh

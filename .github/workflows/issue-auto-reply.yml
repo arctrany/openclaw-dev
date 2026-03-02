@@ -1,0 +1,235 @@
+name: Issue Auto-Reply
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+  models: read
+
+jobs:
+  classify-and-reply:
+    name: 🤖 Classify & Reply
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Classify issue
+        id: classify
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const title = (issue.title || '').toLowerCase();
+            const body = (issue.body || '').toLowerCase();
+            const text = title + ' ' + body;
+            const labels = [];
+
+            // ── Category classification ──
+            if (title.startsWith('[bug]') || /bug|error|crash|fail|broken|报错|崩溃|失败/.test(text)) {
+              labels.push('bug');
+            } else if (title.startsWith('[feature]') || /feature|enhancement|suggest|建议|希望|新功能/.test(text)) {
+              labels.push('enhancement');
+            } else if (title.startsWith('[question]') || /question|how to|how do|怎么|如何|问题/.test(text)) {
+              labels.push('question');
+            }
+
+            // ── Skill classification ──
+            if (/knowledgebase|知识库|架构|原理/.test(text)) labels.push('skill:knowledgebase');
+            if (/node.?op|安装|调试|修复|diagnose|setup|gateway/.test(text)) labels.push('skill:node-ops');
+            if (/skill.?dev|创建.?skill|开发|deploy|evolve/.test(text)) labels.push('skill:dev');
+            if (/rout|模型|model|slot|provider|glm|qwen|gemini/.test(text)) labels.push('skill:routing');
+
+            // ── Platform classification ──
+            if (/claude\s*code/.test(text)) labels.push('platform:claude');
+            if (/qwen/.test(text)) labels.push('platform:qwen');
+            if (/codex/.test(text)) labels.push('platform:codex');
+            if (/gemini|antigravity/.test(text)) labels.push('platform:gemini');
+
+            // ── OS classification ──
+            if (/macos|mac\s*os|darwin/.test(text)) labels.push('os:macos');
+            if (/linux|ubuntu|debian|centos/.test(text)) labels.push('os:linux');
+            if (/windows|wsl/.test(text)) labels.push('os:windows');
+
+            // Ensure labels exist
+            const existingLabels = await github.rest.issues.listLabelsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            const existingNames = existingLabels.data.map(l => l.name);
+
+            for (const label of labels) {
+              if (!existingNames.includes(label)) {
+                const colors = {
+                  'bug': 'd73a4a',
+                  'enhancement': 'a2eeef',
+                  'question': 'd876e3',
+                  'skill:knowledgebase': '0075ca',
+                  'skill:node-ops': 'e4e669',
+                  'skill:dev': 'bfdadc',
+                  'skill:routing': 'c5def5',
+                  'platform:claude': 'fbca04',
+                  'platform:qwen': 'b60205',
+                  'platform:codex': '0e8a16',
+                  'platform:gemini': '1d76db',
+                  'os:macos': 'ededed',
+                  'os:linux': 'ededed',
+                  'os:windows': 'ededed',
+                };
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label,
+                  color: colors[label] || 'cccccc'
+                });
+              }
+            }
+
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: labels
+              });
+            }
+
+            core.setOutput('labels', labels.join(','));
+            core.setOutput('category', labels.find(l => ['bug', 'enhancement', 'question'].includes(l)) || 'other');
+            core.setOutput('skills', labels.filter(l => l.startsWith('skill:')).join(','));
+
+      - name: Generate AI reply
+        id: ai_reply
+        uses: actions/github-script@v7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const category = '${{ steps.classify.outputs.category }}';
+            const skills = '${{ steps.classify.outputs.skills }}'.split(',').filter(Boolean);
+            const labels = '${{ steps.classify.outputs.labels }}'.split(',').filter(Boolean);
+
+            // Build context about the project
+            const projectContext = `
+            openclaw-dev 是一个让 Code Agent 具备 OpenClaw 全栈开发能力的 skill 包。
+            支持平台: Claude Code, Qwen Code, Codex CLI, Gemini (Antigravity)
+            支持 OS: macOS, Linux, Windows (WSL2)
+
+            Skills:
+            - openclaw-dev-knowledgebase: 架构/原理/知识库
+            - openclaw-node-operations: 安装/调试/运维
+            - openclaw-skill-development: Skill 开发 SOP
+            - model-routing-governor: 模型路由策略
+
+            安装: git clone https://github.com/arctrany/openclaw-dev.git && cd openclaw-dev && bash install.sh
+            更新: cd openclaw-dev && git pull && bash install.sh
+            `.trim();
+
+            // Build prompt based on category
+            let systemPrompt = `你是 openclaw-dev 项目的智能助手。请根据用户提交的 Issue 给出清晰、简洁的初始回复。`;
+            systemPrompt += `\n\n项目信息:\n${projectContext}`;
+            systemPrompt += `\n\n回复规则:
+            1. 使用中英双语（中文为主，关键术语用英文）
+            2. 简洁友好，不超过 200 字
+            3. 如果是 bug，感谢反馈并确认已收到，提示可能需要的额外信息
+            4. 如果是 feature，感谢建议并说明会评估
+            5. 如果是 question，尝试给出方向性指引
+            6. 如果缺少环境信息（OS、平台、版本），礼貌提醒补充
+            7. 末尾标注 "🤖 此回复由 AI 自动生成，maintainer 会尽快跟进"`;
+
+            const userMessage = `Issue #${issue.number}: ${issue.title}\n\n${issue.body || '(无描述)'}\n\nClassified as: ${category}\nRelated skills: ${skills.join(', ') || 'none detected'}`;
+
+            // Call GitHub Models API (GLM-5 via Qwen/Bailian Coding Plan)
+            const modelId = 'bailian/glm-5';
+
+            try {
+              const response = await fetch('https://models.github.ai/inference/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  model: modelId,
+                  messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userMessage }
+                  ],
+                  max_tokens: 512,
+                  temperature: 0.3
+                })
+              });
+
+              if (!response.ok) {
+                const errText = await response.text();
+                core.warning(`GitHub Models API error (${response.status}): ${errText}. Falling back to template reply.`);
+                core.setOutput('reply', '');
+                return;
+              }
+
+              const data = await response.json();
+              const aiReply = data.choices?.[0]?.message?.content || '';
+              core.setOutput('reply', aiReply);
+            } catch (err) {
+              core.warning(`AI reply generation failed: ${err.message}. Using template reply.`);
+              core.setOutput('reply', '');
+            }
+
+      - name: Post reply
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const category = '${{ steps.classify.outputs.category }}';
+            const aiReply = `${{ steps.ai_reply.outputs.reply }}`;
+
+            let reply = '';
+
+            if (aiReply && aiReply.trim()) {
+              reply = aiReply.trim();
+            } else {
+              // Fallback template replies
+              const templates = {
+                bug: `感谢反馈！🐛 我们已收到您的 bug 报告。
+
+            为了更快定位问题，请确认以下信息已提供:
+            - [ ] 操作系统 (macOS / Linux / Windows WSL2)
+            - [ ] Agent 平台 (Claude Code / Qwen / Codex / Gemini)
+            - [ ] 重现步骤
+            - [ ] 错误日志
+
+            Maintainer 会尽快跟进。`,
+
+                enhancement: `感谢您的建议！✨
+
+            我们会评估这个功能请求，并在后续版本中考虑。
+            如果社区有更多人对此感兴趣，请 👍 这个 issue。
+
+            Maintainer 会尽快跟进。`,
+
+                question: `感谢提问！❓
+
+            在等待回复的同时，您可以参考:
+            - 📖 [README](https://github.com/arctrany/openclaw-dev#readme)
+            - 安装验证: \`bash install.sh && for s in skills/openclaw-*/; do head -10 "$s/SKILL.md"; done\`
+
+            Maintainer 会尽快跟进。`,
+
+                other: `感谢您的反馈！
+
+            我们已收到您的 issue，maintainer 会尽快查看。`
+              };
+
+              reply = templates[category] || templates.other;
+              reply += '\n\n🤖 此回复由模板自动生成。';
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: reply
+            });

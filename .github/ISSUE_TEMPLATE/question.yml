@@ -1,0 +1,55 @@
+name: ❓ Question / 使用问题
+description: Ask a question about openclaw-dev usage, skills, or configuration.
+title: "[Question] "
+labels: ["question", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        有使用问题？请先查看 README 和 SKILL.md。
+        Have a question? Please check the README and SKILL.md first.
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: 问题类别 / Category
+      options:
+        - Installation / 安装
+        - Skill usage / Skill 使用
+        - Model routing / 模型路由
+        - Platform compatibility / 平台兼容
+        - Configuration / 配置
+        - Other / 其他
+    validations:
+      required: true
+
+  - type: dropdown
+    id: skill
+    attributes:
+      label: 涉及的 Skill
+      options:
+        - openclaw-dev-knowledgebase
+        - openclaw-node-operations
+        - openclaw-skill-development
+        - model-routing-governor
+        - General / 通用
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: 你的问题 / Your Question
+      description: 请清晰描述你的问题
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 上下文 / Context
+      description: 你在什么场景下遇到这个问题？
+      placeholder: |
+        - 我在尝试 ...
+        - 使用的平台: Claude Code / Qwen / ...
+        - 使用的 Agent: ...

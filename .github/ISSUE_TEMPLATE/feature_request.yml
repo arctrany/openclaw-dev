@@ -1,0 +1,52 @@
+name: ✨ Feature Request / 功能建议
+description: Suggest a new feature or improvement.
+title: "[Feature] "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        欢迎提功能建议！请描述你的想法。
+        We'd love to hear your ideas! Please describe the feature you'd like.
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 动机 / Motivation
+      description: 为什么需要这个功能？解决什么问题？
+      placeholder: 在使用 xxx 时，我发现...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 期望行为 / Proposed Solution
+      description: 你期望的功能是什么样的？
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 影响范围 / Scope
+      options:
+        - New skill
+        - Existing skill improvement
+        - New command
+        - Installation / setup
+        - Model routing
+        - Cross-platform support
+        - Documentation
+        - Other
+
+  - type: checkboxes
+    id: platforms
+    attributes:
+      label: 目标平台 / Target Platforms
+      options:
+        - label: Claude Code
+        - label: Qwen Code
+        - label: Codex CLI
+        - label: Gemini (Antigravity)
+        - label: All platforms
