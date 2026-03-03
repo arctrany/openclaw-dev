@@ -118,6 +118,11 @@ PRIVACY_WHITELIST=(
   'install\.ps1'
   'curl -fsSL'
   'iwr -useb'
+  '100\.64\.'              # Tailscale CGNAT range (documentation)
+  '10\.0\.0\.'             # Private LAN (documentation)
+  '192\.168\.'             # Private LAN (documentation)
+  '172\.1[6-9]\.|172\.2[0-9]\.|172\.3[01]\.'  # Private LAN (documentation)
+  '169\.254\.'             # Link-local (documentation)
 )
 
 is_whitelisted_privacy() {
