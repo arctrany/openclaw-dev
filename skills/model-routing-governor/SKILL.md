@@ -1,6 +1,6 @@
 ---
 name: model-routing-governor
-description: Use this skill when the user asks to design, implement, audit, or evolve model routing policies across multiple providers/models (for example work/private routing, coding vs research routing, provider safety constraints, fallback chains, slot/alias-based routing, or future-proof model name migration). Includes a runnable router and policy validator.
+description: "Use this skill when the user asks to design, implement, audit, or evolve model routing policies across multiple providers/models. Triggers: 'Which model should I use for X?', 'Design a routing policy across many models/providers', 'Work/private/sensitive routing policy', 'Coding should prefer domestic models, but escalate on hard tasks', 'How do we handle future model name changes?', 'Create a router script / policy config / fallback chain', 'Audit current model routing', work/private routing, coding vs research routing, provider safety constraints, fallback chains, slot/alias-based routing, or future-proof model name migration. Includes a runnable router and policy validator."
 metadata: {"clawdbot":{"always":false,"emoji":"🧭","requires":{"bins":["python3"]}}}
 user-invocable: true
 version: 0.2.0
@@ -17,17 +17,6 @@ This skill standardizes how to choose models across providers using:
 - task-specific fallback chains
 
 Use this skill to build or maintain a routing system that can be shared across Claude/Codex/OpenClaw-style runtimes.
-
-## When To Use
-
-Use this skill when the user asks for any of the following:
-- "Which model should I use for X?"
-- "Design a routing policy across many models/providers"
-- "Work/private/sensitive routing policy"
-- "Coding should prefer domestic models, but escalate on hard tasks"
-- "How do we handle future model name changes?"
-- "Create a router script / policy config / fallback chain"
-- "Audit current model routing"
 
 ## What This Skill Provides
 

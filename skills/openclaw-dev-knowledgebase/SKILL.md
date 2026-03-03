@@ -17,6 +17,11 @@ OpenClaw 全面知识库 — 功能/架构/开发/部署/运维 + plugin API + a
 >
 > ⛔ **铁律: 遇到问题先跑 `openclaw doctor`**
 > - 任何异常先运行 `openclaw doctor`，它会自动检测并修复常见问题
+>
+> ⛔ **铁律: 零硬编码（组织铁律 #1）**
+> - Skill 文件内禁止写死：路径（`/Users/`、`/Volumes/`）、邮箱、IP:Port、API Key、模型名
+> - 运行时值的权威来源：`~/.openclaw/openclaw.env`（env vars）、`~/.openclaw/openclaw.json`（config）
+> - 实验室路径（`/Volumes/EXT/openclaw-god/`）禁止出现在生产侧 workspace 的任何文件中
 
 ## 知识索引
 

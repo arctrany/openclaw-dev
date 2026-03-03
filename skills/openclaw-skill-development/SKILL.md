@@ -118,6 +118,18 @@ Instructions for the agent...
 3. **Progressive disclosure** — Level 1: metadata (~100 words, always loaded). Level 2: SKILL.md body (<5k words, loaded on trigger). Level 3: references/ (unlimited, loaded on demand).
 4. **Imperative voice** — write instructions in imperative form ("Run X", "Check Y"), not descriptive ("This skill runs X").
 5. **No extraneous files** — no README.md, CHANGELOG.md, INSTALLATION_GUIDE.md. Only SKILL.md and functional resources.
+6. **Zero hardcoding** (Organization Iron Law #1) — skills must be portable. Never embed environment-specific values:
+
+   | Forbidden | Compliant alternative |
+   |-----------|----------------------|
+   | `/Users/xxx/`, `/Volumes/EXT/` | `$HOME`, task-param `$OUTPUT_FILE` |
+   | `user@gmail.com` | `$GOOGLE_DRIVE_ACCOUNT` from `openclaw.env` |
+   | `127.0.0.1:8045` | read from `openclaw.json` → `models.providers` |
+   | `sk-abc123...` (API keys) | read from `secrets/` dir, never in SKILL.md |
+   | `model-name-v3` (literal) | resolve via `model-routing-governor` slot |
+   | `PYTHONPATH=/abs/path` | `$OPENCLAW_PYTHONPATH` from `openclaw.env` |
+
+   **SSOT for runtime values**: `~/.openclaw/openclaw.env` (env vars) and `~/.openclaw/openclaw.json` (config). Skills read from these; they never redefine them.
 
 ## Phase 3: Implement
 
@@ -175,6 +187,16 @@ fi
 # 5. Line count check
 LINES=$(wc -l < "$SKILL_DIR/SKILL.md")
 [ "$LINES" -le 500 ] && echo "OK: $LINES lines (under 500)" || echo "WARN: $LINES lines (over 500, consider splitting)"
+
+# 6. Hardcoding compliance check (Organization Iron Law #1)
+echo "--- Hardcoding scan ---"
+VIOLATIONS=$(grep -nE '/Users/[^$]|/Volumes/EXT|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|127\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+|sk-[a-f0-9]{20,}|PYTHONPATH=/' "$SKILL_DIR/SKILL.md" 2>/dev/null)
+if [ -z "$VIOLATIONS" ]; then
+  echo "OK: no hardcoded paths/credentials/IPs found"
+else
+  echo "FAIL: hardcoded values detected — replace with env vars or task params:"
+  echo "$VIOLATIONS"
+fi
 ```
 
 ### Dependency validation
@@ -261,6 +283,9 @@ for line in sys.stdin:
 | `always: true` on optional skill | Wastes context every session | Only use `always` for core behavioral skills |
 | No dependency check | Skill fails at runtime | Use `requires.bins` / `requires.anyBins` in metadata |
 | Memory files not preserved | Agent loses history during migration | Always copy `memory/` and `MEMORY.md` when migrating workspaces |
+| Hardcoded paths/emails/keys | Skill breaks on different machine or account | Use `$HOME`, `$GOOGLE_DRIVE_ACCOUNT`, `$OPENCLAW_PYTHONPATH` from `openclaw.env`; read model names from `openclaw.json` |
+| API key in SKILL.md plaintext | Credential leak (CRITICAL) | Read from `secrets/` dir via task param; never write into skill files |
+| Lab path in production skill | Couples production to dev environment | Production skills (`~/.openclaw/workspace-*/`) must not reference `/Volumes/EXT/openclaw-god/` or similar lab paths |
 
 ## Skill Categories & Templates
 
