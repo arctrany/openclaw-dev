@@ -147,6 +147,11 @@ SECRET_WHITELIST=(
   '<key>'
   '<secret>'
   '<password>'
+  '\.\.\.'                     # password: "..."
+  'long-random'                # obviously fake: "long-random-token"
+  '[A-Z]+_TOKEN'               # ACME_TOKEN, GATEWAY_TOKEN, etc.
+  'EXAMPLE'
+  'NOT_A_REAL'
 )
 
 is_whitelisted_secret() {
