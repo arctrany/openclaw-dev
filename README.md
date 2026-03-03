@@ -45,7 +45,8 @@ OpenClaw 架构原理    → 应触发 knowledgebase skill
 - **单一事实源**: `skills/` + `commands/` + `agents/` 是唯一的内容来源，无冗余副本
 - **活知识**: `fault-patterns.md` 是活文档，agent 每次诊断后会追加新发现
 - **闭环进化**: 分析 → 发现模式 → 沉淀 → 下次分析更精准
-- **正交设计**: 4 个 skill 分工明确，14 个 command 不重叠
+- **正交设计**: 4 个 skill 分工明确，16 个 command 不重叠
+- **自我进化**: `/collect-signals` + `/evolve-openclaw-dev` 从 Issues、日志、版本更新三路数据驱动插件自身演化
 
 ## 为什么需要这个？
 
@@ -111,6 +112,16 @@ Agent 验证 `openclaw.json` 的语法、必要字段、安全设置、路径可
 
 Agent 分析 momiji 的 session 日志，找到 voice-engine skill 的触发率、错误率、改进方向。
 
+### 场景 7: 驱动 openclaw-dev 自身进化
+
+```
+/collect-signals --agent all --days 30
+/evolve-openclaw-dev
+```
+
+从三个数据源采集信号：GitHub Issues、本地/远程 agent 日志、OpenClaw 版本更新。
+生成优先级排序报告（P0/P1/P2），逐条确认后更新 SKILL.md 和 commands/，发版分发。
+
 ## 测试
 
 安装后，打开对应的 code agent，发送以下测试指令：
@@ -157,7 +168,7 @@ openclaw-dev/
 │   ├── openclaw-node-operations/      安装/调试/运维 (v3.0.0)
 │   ├── openclaw-skill-development/    Skill 开发 SOP (v3.0.0)
 │   └── model-routing-governor/        模型路由策略 (v0.2.0)
-├── commands/                    📋 14 个斜杠命令
+├── commands/                    📋 16 个斜杠命令
 │   ├── diagnose.md              运行时日志诊断
 │   ├── setup-node.md            节点安装部署
 │   ├── lint-config.md           配置校验
@@ -171,13 +182,19 @@ openclaw-dev/
 │   ├── scaffold-plugin.md       脚手架 plugin
 │   ├── sync-knowledge.md        同步知识库
 │   ├── diagnose-openclaw.md     QA 模块诊断
-│   └── evolve-openclaw-capability.md  QA 能力演化
+│   ├── evolve-openclaw-capability.md  QA 能力演化
+│   ├── collect-signals.md       采集进化信号（Issues/日志/版本）
+│   └── evolve-openclaw-dev.md   分析信号 + 生成进化报告
 ├── agents/                      🤖 3 个专家 agent
 │   ├── openclaw-capability-evolver.md
 │   ├── plugin-validator.md
 │   └── skill-reviewer.md
 ├── plugins/qa/                  🧪 QA 子插件
+├── data/                        📊 运行时数据（gitignored）
+│   └── signals.json             进化信号（/collect-signals 输出）
 ├── scripts/                     辅助脚本
+│   ├── collect-signals.py       agent-aware 信号采集（支持 SSH 远程）
+│   └── ...
 ├── install.sh                   跨平台分发脚本
 ├── uninstall.sh                 卸载脚本
 ├── AGENTS.md                    OpenClaw workspace 指令
