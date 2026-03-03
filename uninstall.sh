@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # uninstall.sh — 卸载 openclaw-dev 技能包
 # 支持: Claude Code, Gemini Antigravity, Codex CLI, Qwen Code
 #
@@ -34,6 +34,7 @@ SKILL_DIRS=(
   "openclaw-dev-knowledgebase"
   "openclaw-skill-development"
   "openclaw-node-operations"
+  "model-routing-governor"
 )
 
 # ── 工具函数 ──────────────────────────────────────────
@@ -78,7 +79,41 @@ remove_installed() {
 
 uninstall_claude() {
   step "从 Claude Code 卸载"
-  remove_installed "$HOME/.claude/plugins/openclaw-dev" "Claude Code global"
+
+  # 移除全局 commands 中的 openclaw 命令文件
+  local removed_cmds=0
+  if [ -d "$HOME/.claude/commands" ]; then
+    for cmd_file in "$HOME/.claude/commands"/*.md; do
+      [ -f "$cmd_file" ] || continue
+      if grep -q "openclaw\|diagnose\|setup-node\|lint-config\|evolve-skill\|create-skill\|deploy-skill\|validate-skill\|list-skills\|scaffold" "$cmd_file" 2>/dev/null; then
+        if $DRY_RUN; then
+          dry_run "rm $cmd_file"
+        else
+          rm "$cmd_file"
+        fi
+        removed_cmds=$((removed_cmds + 1))
+      fi
+    done
+  fi
+  if [ "$removed_cmds" -gt 0 ]; then
+    ok "Claude commands: $removed_cmds 个命令文件已移除"
+    REMOVED=$((REMOVED + 1))
+  else
+    warn "Claude commands: 未找到已安装的命令文件"
+    SKIPPED=$((SKIPPED + 1))
+  fi
+
+  # 移除 ~/.claude/CLAUDE.md 中的 openclaw-dev 段落
+  local global_claude_md="$HOME/.claude/CLAUDE.md"
+  if [ -f "$global_claude_md" ] && grep -q "openclaw-dev\|OpenClaw Dev Skills" "$global_claude_md"; then
+    if $DRY_RUN; then
+      dry_run "从 $global_claude_md 移除 openclaw-dev 段落"
+    else
+      awk '/^## OpenClaw Dev Skills/{skip=1} skip && /^## / && !/^## OpenClaw Dev Skills/{skip=0} !skip' "$global_claude_md" > "$global_claude_md.tmp" && mv "$global_claude_md.tmp" "$global_claude_md"
+      ok "~/.claude/CLAUDE.md: 已移除 OpenClaw Dev Skills 段落"
+    fi
+    REMOVED=$((REMOVED + 1))
+  fi
 
   # 移除项目级 CLAUDE.md 中的 openclaw-dev 段落
   if [ -n "$PROJECT_DIR" ]; then
@@ -99,7 +134,10 @@ uninstall_codex() {
   step "从 Codex CLI 卸载"
 
   # 移除 skills 链接
-  remove_installed "$HOME/.codex/openclaw-dev-skills" "Codex global skills"
+  # 移除 ~/.codex/skills/ 下的 openclaw skill 目录
+  for skill in "${SKILL_DIRS[@]}"; do
+    remove_installed "$HOME/.codex/skills/$skill" "Codex/$skill"
+  done
 
   # 辅助函数: 用 awk 安全地移除 marker 块 (避免 sed 与 HTML 注释的转义问题)
   _remove_marker_block() {
@@ -157,12 +195,21 @@ uninstall_qwen() {
 detect_installed() {
   local detected=()
 
-  if [ -L "$HOME/.claude/plugins/openclaw-dev" ]; then
+  # Claude: 检测 commands 目录是否有 openclaw 命令文件
+  if [ -d "$HOME/.claude/commands" ] && ls "$HOME/.claude/commands"/*.md 2>/dev/null | xargs grep -l "openclaw\|diagnose\|setup-node" 2>/dev/null | grep -q .; then
+    detected+=("claude")
+  elif [ -f "$HOME/.claude/CLAUDE.md" ] && grep -q "OpenClaw Dev Skills" "$HOME/.claude/CLAUDE.md" 2>/dev/null; then
     detected+=("claude")
   fi
 
-  if [ -L "$HOME/.codex/openclaw-dev-skills" ] || \
-     ([ -f "$HOME/.codex/instructions.md" ] && grep -q "openclaw-dev" "$HOME/.codex/instructions.md" 2>/dev/null); then
+  # Codex: 检测 ~/.codex/skills/ 下是否有 openclaw skill 目录
+  local codex_found=false
+  for skill in "${SKILL_DIRS[@]}"; do
+    if [ -d "$HOME/.codex/skills/$skill" ]; then
+      codex_found=true; break
+    fi
+  done
+  if $codex_found || ([ -f "$HOME/.codex/instructions.md" ] && grep -q "openclaw-dev" "$HOME/.codex/instructions.md" 2>/dev/null); then
     detected+=("codex")
   fi
 

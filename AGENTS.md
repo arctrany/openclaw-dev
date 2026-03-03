@@ -20,10 +20,10 @@ bash plugins/qa/scripts/run-qa-tests.sh --agent <agent-id> --quick
 bash plugins/qa/scripts/run-qa-tests.sh --agent <agent-id> --full
 
 # 2. 验证 skill 定义质量
-bash scripts/validate-skill.sh skills/<skill-name>
+bash scripts/skill-lint.sh skills/<skill-name>
 
 # 3. 验证 skill 是否已加载到 agent 会话
-bash scripts/verify-skill.sh <agent-id> <skill-name>
+bash skills/openclaw-skill-development/scripts/verify-skill-loaded.sh <agent-id> <skill-name>
 
 # 4. 场景化模型路由
 oc-route --list-presets
@@ -37,7 +37,7 @@ oc-route sensitive-research -m "..." --pretty
 
 1. `plugins/qa` 快速诊断 → 定位失败场景
 2. 修改 `skills/` / agent 配置 / OpenClaw 环境
-3. `scripts/validate-skill.sh` 静态校验
+3. `scripts/skill-lint.sh` 静态校验
 4. 回跑 `plugins/qa` 验证回归
 5. 修复策略沉淀到 `skills/` / `commands/` / `agents/`
 

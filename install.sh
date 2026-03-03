@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # openclaw-dev — Install OpenClaw development skills to your code agents
 #
@@ -32,10 +32,10 @@ INSTALLED=0
 copy_skills() {
   local target="$1"
   mkdir -p "$target"
-  for skill in "$SKILLS_DIR"/openclaw-*/; do
+  for skill in "$SKILLS_DIR"/*/; do
     local name=$(basename "$skill")
     rm -rf "$target/$name"
-    cp -r "$skill" "$target/$name"
+    cp -rp "$skill" "$target/$name"
   done
 }
 
@@ -81,7 +81,7 @@ install_qwen() {
   echo "  📦 Qwen"
 
   copy_skills "$HOME/.qwen/skills"
-  echo "     ✅ 3 skills → ~/.qwen/skills/"
+  echo "     ✅ $(ls -d "$SKILLS_DIR"/*/ | wc -l | tr -d ' ') skills → ~/.qwen/skills/"
 
   if [ -f "$HOME/.qwen/settings.json" ]; then
     if jq -e '.experimental.skills == true' "$HOME/.qwen/settings.json" >/dev/null 2>&1; then
@@ -101,7 +101,7 @@ install_codex() {
   echo "  📦 Codex"
 
   copy_skills "$HOME/.codex/skills"
-  echo "     ✅ 3 skills → ~/.codex/skills/"
+  echo "     ✅ $(ls -d "$SKILLS_DIR"/*/ | wc -l | tr -d ' ') skills → ~/.codex/skills/"
 
   command -v codex >/dev/null 2>&1 && echo "     ✅ codex CLI: $(which codex)"
   INSTALLED=$((INSTALLED + 1))
@@ -118,7 +118,7 @@ install_gemini() {
   # Auto-install to current directory if it looks like a project
   if [ -d ".git" ] || [ -f "package.json" ] || [ -d ".agents" ]; then
     copy_skills ".agents/skills"
-    echo "     ✅ 3 skills → .agents/skills/"
+    echo "     ✅ $(ls -d "$SKILLS_DIR"/*/ | wc -l | tr -d ' ') skills → .agents/skills/"
     INSTALLED=$((INSTALLED + 1))
   else
     echo "     ℹ️  Gemini requires per-project install."

@@ -18,9 +18,15 @@
 # Node modules (if any)
 node_modules/
 
-# Python cache (if any)
+# Python cache and virtual envs (if any)
 __pycache__/
 *.pyc
+.venv/
+venv/
+*.egg-info/
+
+# QA generated reports
+plugins/qa/reports/
 
 # Generated platform directories (created by install.sh)
 .claude/

@@ -64,6 +64,8 @@ PATH_PATTERNS=(
 PATH_WHITELIST=(
   'grep.*"/Volumes/'           # grep command checking for /Volumes/
   '不应在.*Volumes'             # diagnostic guidance: should not be on /Volumes
+  '禁止.*Volumes'               # diagnostic guidance: forbidden on /Volumes
+  'Forbidden.*Volumes'         # English equivalent
   '<disk-name>'                # placeholder: /Volumes/<disk-name>
   'echo.*Volumes'              # echo/warning about /Volumes
 )
