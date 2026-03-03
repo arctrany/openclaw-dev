@@ -19,12 +19,12 @@ NC='\033[0m'
 
 error() {
   echo -e "  ${RED}✗ [ERROR]${NC} $1"
-  ((ERRORS++))
+  ERRORS=$((ERRORS + 1))
 }
 
 warn() {
   echo -e "  ${YELLOW}⚠ [WARN]${NC}  $1"
-  ((WARNINGS++))
+  WARNINGS=$((WARNINGS + 1))
 }
 
 ok() {
@@ -38,7 +38,7 @@ lint_skill() {
   local skill_file="${skill_dir}/SKILL.md"
 
   echo -e "\n${CYAN}━━━ ${skill_name} ━━━${NC}"
-  ((SKILLS_CHECKED++))
+  SKILLS_CHECKED=$((SKILLS_CHECKED + 1))
 
   # ── Check SKILL.md exists ──
   if [[ ! -f "$skill_file" ]]; then
@@ -66,7 +66,7 @@ lint_skill() {
     if $in_frontmatter; then
       frontmatter+="${line}"$'\n'
     elif $past_frontmatter; then
-      ((body_lines++))
+      body_lines=$((body_lines + 1))
     fi
   done < "$skill_file"
 

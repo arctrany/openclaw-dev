@@ -60,6 +60,24 @@ PATH_PATTERNS=(
   '/Volumes/[a-zA-Z]'        # macOS external disks
 )
 
+# Context-aware whitelist for path patterns (docs/diagnostic guidance)
+PATH_WHITELIST=(
+  'grep.*"/Volumes/'           # grep command checking for /Volumes/
+  '不应在.*Volumes'             # diagnostic guidance: should not be on /Volumes
+  '<disk-name>'                # placeholder: /Volumes/<disk-name>
+  'echo.*Volumes'              # echo/warning about /Volumes
+)
+
+is_whitelisted_path() {
+  local line="$1"
+  for wl in "${PATH_WHITELIST[@]}"; do
+    if echo "$line" | grep -qiE "$wl"; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 # 2. Secret / Key patterns
 SECRET_PATTERNS=(
   'API_KEY\s*[=:]\s*["\x27][^"'\''<>]+["\x27]'    # API_KEY = "xxx" (not placeholder)
@@ -171,7 +189,9 @@ while IFS= read -r file; do
     # 1. Path leak check
     for pattern in "${PATH_PATTERNS[@]}"; do
       if echo "$line" | grep -q -E -e "$pattern"; then
-        log_violation "PERSONAL_PATH" "$file" "$line_num" "$line"
+        if ! is_whitelisted_path "$line"; then
+          log_violation "PERSONAL_PATH" "$file" "$line_num" "$line"
+        fi
         break
       fi
     done
