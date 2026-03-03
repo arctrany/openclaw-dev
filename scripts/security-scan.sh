@@ -23,7 +23,7 @@ log_violation() {
   echo "  Line: ${line_num}"
   echo "  Content: ${content}"
   echo ""
-  ((VIOLATIONS++))
+  VIOLATIONS=$((VIOLATIONS + 1))
 }
 
 # ── Whitelist ───────────────────────────────────────────────────────────────
@@ -180,11 +180,11 @@ while IFS= read -r file; do
     *) continue ;;
   esac
 
-  ((TOTAL_FILES++))
+  TOTAL_FILES=$((TOTAL_FILES + 1))
   line_num=0
 
   while IFS= read -r line; do
-    ((line_num++))
+    line_num=$((line_num + 1))
 
     # 1. Path leak check
     for pattern in "${PATH_PATTERNS[@]}"; do
