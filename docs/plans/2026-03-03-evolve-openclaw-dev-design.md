@@ -28,6 +28,7 @@ openclaw-dev 目前缺乏分析自身使用情况的能力。`/evolve-skill` 命
 | 触发方式 | 半自动：手动触发采集和分析，开发者审批改动 |
 | 产出对象 | openclaw-dev 开发者（改进 repo 本身，不动用户本地 skill 副本）|
 | 用户反馈来源 | GitHub Issues |
+| OpenClaw 版本触发 | `openclaw --version` + `gh release view` 检测版本差异，解析 Release Notes |
 | 日志来源 | 各 agent 本地日志 + SSH 远程节点日志 |
 | agent 日志路径 | 动态发现，不硬编码 |
 | 分析信号 | skill 触发率/错误率 + command 使用率 |
@@ -43,7 +44,9 @@ GitHub Issues  ─────┐
                     ├──→  /collect-signals  ──→  signals.json  ──→  /evolve-openclaw-dev
 本地 agent 日志 ────┤         (agent-aware         (结构化信号)        (分析 + 报告 + diff)
                     │         动态发现路径)
-远程 SSH 节点  ─────┘
+远程 SSH 节点  ─────┤
+                    │
+OpenClaw 版本  ─────┘
 ```
 
 两个命令，职责严格分离：采集不分析，分析不采集。
