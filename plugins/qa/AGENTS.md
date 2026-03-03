@@ -32,7 +32,7 @@ bash scripts/codex-diagnose.sh --agent <agent-id> --quick
 ## 可覆盖环境变量（用于不同 OpenClaw 部署）
 
 - `OPENCLAW_HOME_DIR`：默认 `~/.openclaw`
-- `QA_SESSIONS_ROOT`：集中式 session 根目录（默认 `/Volumes/EXT/openclaw/sessions`）
+- `QA_SESSIONS_ROOT`：集中式 session 根目录（默认 `$HOME/.openclaw/sessions`）
 - `QA_SESSION_DIR_OVERRIDE`：直接指定某个 agent 的 session 目录（优先级最高）
 - `QA_OPENCLAW_CONFIG_FILE`：OpenClaw 主配置文件路径
 - `QA_AUTH_PROFILES_FILE`：认证配置路径

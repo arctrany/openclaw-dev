@@ -514,7 +514,7 @@ For optimization strategies, read: references/optimization.md
 **Never hardcode credentials**:
 ```yaml
 # Bad
-metadata: {"clawdbot":{"apiKey":"sk-abc123..."}}
+metadata: {"clawdbot":{"apiKey":"sk-EXAMPLE_NOT_A_REAL_KEY"}}
 
 # Good
 metadata: {"clawdbot":{"primaryEnv":"OPENCLAW_API_KEY","requires":{"env":["OPENCLAW_API_KEY"]}}}

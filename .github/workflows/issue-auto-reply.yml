@@ -105,12 +105,15 @@ jobs:
         uses: actions/github-script@v7
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLASSIFY_CATEGORY: ${{ steps.classify.outputs.category }}
+          CLASSIFY_SKILLS: ${{ steps.classify.outputs.skills }}
+          CLASSIFY_LABELS: ${{ steps.classify.outputs.labels }}
         with:
           script: |
             const issue = context.payload.issue;
-            const category = '${{ steps.classify.outputs.category }}';
-            const skills = '${{ steps.classify.outputs.skills }}'.split(',').filter(Boolean);
-            const labels = '${{ steps.classify.outputs.labels }}'.split(',').filter(Boolean);
+            const category = process.env.CLASSIFY_CATEGORY || 'other';
+            const skills = (process.env.CLASSIFY_SKILLS || '').split(',').filter(Boolean);
+            const labels = (process.env.CLASSIFY_LABELS || '').split(',').filter(Boolean);
 
             // Build context about the project
             const projectContext = `
@@ -180,11 +183,14 @@ jobs:
 
       - name: Post reply
         uses: actions/github-script@v7
+        env:
+          AI_REPLY: ${{ steps.ai_reply.outputs.reply }}
+          CLASSIFY_CATEGORY: ${{ steps.classify.outputs.category }}
         with:
           script: |
             const issue = context.payload.issue;
-            const category = '${{ steps.classify.outputs.category }}';
-            const aiReply = `${{ steps.ai_reply.outputs.reply }}`;
+            const category = process.env.CLASSIFY_CATEGORY || 'other';
+            const aiReply = process.env.AI_REPLY || '';
 
             let reply = '';
 

@@ -85,7 +85,7 @@ done
 ✅ agents.list: 3 个 agent
 ✅ master workspace: ~/.openclaw/workspace-master
 ❌ worker-sg workspace 不存在: ~/.openclaw/workspace-worker-sg
-⚠️  node 在外接硬盘: /Volumes/EXT/.../node
+⚠️  node 在外接硬盘: /Volumes/<disk-name>/.../node
 ✅ Lint 完成: 4 pass, 1 fail, 1 warn
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```

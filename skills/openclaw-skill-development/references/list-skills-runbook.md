@@ -39,7 +39,7 @@ fi
 
 echo ""
 echo "=== Bundled Skills ==="
-BUNDLED=$(dirname $(which openclaw-gateway 2>/dev/null || echo "/Users/$(whoami)/.bun/install/global/node_modules/openclaw/bin/openclaw-gateway"))/../skills
+BUNDLED=$(dirname $(which openclaw-gateway 2>/dev/null || echo "$HOME/.bun/install/global/node_modules/openclaw/bin/openclaw-gateway"))/../skills
 if [ -d "$BUNDLED" ]; then
   ls "$BUNDLED" | head -20
   TOTAL=$(ls "$BUNDLED" | wc -l | tr -d ' ')

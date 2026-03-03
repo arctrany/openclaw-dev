@@ -12,9 +12,7 @@ export OPENCLAW_HOME_DIR="${OPENCLAW_HOME_DIR:-${OPENCLAW_HOME:-$HOME/.openclaw}
 
 # Best-effort auto-detection for common session layouts.
 if [ -z "${QA_SESSIONS_ROOT:-}" ]; then
-  if [ -d /Volumes/EXT/openclaw/sessions ]; then
-    export QA_SESSIONS_ROOT="/Volumes/EXT/openclaw/sessions"
-  elif [ -d "$HOME/.openclaw/sessions" ]; then
+  if [ -d "$HOME/.openclaw/sessions" ]; then
     export QA_SESSIONS_ROOT="$HOME/.openclaw/sessions"
   fi
 fi

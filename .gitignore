@@ -1,7 +1,11 @@
 # Editor
 .DS_Store
+._*
 .vscode/
 .idea/
+
+# Design files
+*.pen
 
 # Logs
 *.log

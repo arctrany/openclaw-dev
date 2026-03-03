@@ -44,7 +44,7 @@ err()     { echo -e "${RED}❌${NC} $1"; }
 step()    { echo -e "${CYAN}▸${NC}  ${BOLD}$1${NC}"; }
 dry_run() { echo -e "${YELLOW}[DRY-RUN]${NC} $1"; }
 
-remove_symlink() {
+remove_installed() {
   local path="$1"
   local label="$2"
 
@@ -53,11 +53,20 @@ remove_symlink() {
       dry_run "rm $path"
     else
       rm "$path"
-      ok "$label: 已移除"
+      ok "$label: 已移除 (symlink)"
+    fi
+    REMOVED=$((REMOVED + 1))
+  elif [ -d "$path" ] && [ -f "$path/SKILL.md" ]; then
+    # Installed via cp (not symlink) — verify it's an openclaw skill before removing
+    if $DRY_RUN; then
+      dry_run "rm -rf $path"
+    else
+      rm -rf "$path"
+      ok "$label: 已移除 (directory)"
     fi
     REMOVED=$((REMOVED + 1))
   elif [ -e "$path" ]; then
-    warn "$label: 存在但不是 symlink, 跳过 ($path)"
+    warn "$label: 存在但无法识别为 openclaw 安装, 跳过 ($path)"
     SKIPPED=$((SKIPPED + 1))
   else
     warn "$label: 未安装"
@@ -69,7 +78,7 @@ remove_symlink() {
 
 uninstall_claude() {
   step "从 Claude Code 卸载"
-  remove_symlink "$HOME/.claude/plugins/openclaw-dev" "Claude Code global"
+  remove_installed "$HOME/.claude/plugins/openclaw-dev" "Claude Code global"
 
   # 移除项目级 CLAUDE.md 中的 openclaw-dev 段落
   if [ -n "$PROJECT_DIR" ]; then
@@ -90,7 +99,7 @@ uninstall_codex() {
   step "从 Codex CLI 卸载"
 
   # 移除 skills 链接
-  remove_symlink "$HOME/.codex/openclaw-dev-skills" "Codex global skills"
+  remove_installed "$HOME/.codex/openclaw-dev-skills" "Codex global skills"
 
   # 辅助函数: 用 awk 安全地移除 marker 块 (避免 sed 与 HTML 注释的转义问题)
   _remove_marker_block() {
@@ -128,7 +137,7 @@ uninstall_gemini() {
   fi
   step "从 Gemini Antigravity 卸载 ← $PROJECT_DIR"
   for skill in "${SKILL_DIRS[@]}"; do
-    remove_symlink "$PROJECT_DIR/.agents/skills/$skill" "Gemini/$skill"
+    remove_installed "$PROJECT_DIR/.agents/skills/$skill" "Gemini/$skill"
   done
 }
 
@@ -139,7 +148,7 @@ uninstall_qwen() {
   fi
   step "从 Qwen Code 卸载 ← $PROJECT_DIR"
   for skill in "${SKILL_DIRS[@]}"; do
-    remove_symlink "$PROJECT_DIR/.qwen/skills/$skill" "Qwen/$skill"
+    remove_installed "$PROJECT_DIR/.qwen/skills/$skill" "Qwen/$skill"
   done
 }
 

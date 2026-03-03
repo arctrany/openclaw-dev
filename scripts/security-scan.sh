@@ -57,6 +57,7 @@ PATH_PATTERNS=(
   'C:\\Users\\'               # Windows home dir
   'C:/Users/'                 # Windows (forward slash)
   '/var/folders/'             # macOS temp
+  '/Volumes/[a-zA-Z]'        # macOS external disks
 )
 
 # 2. Secret / Key patterns
