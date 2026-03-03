@@ -44,3 +44,7 @@ plugins/qa/reports/
 *.key
 id_rsa*
 id_ed25519*
+
+# Evolution signals (contains user paths, not for repo)
+data/signals.json
+data/signals.*.json
