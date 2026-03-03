@@ -242,14 +242,21 @@ def collect_openclaw_version() -> dict:
     except (FileNotFoundError, subprocess.TimeoutExpired):
         pass
 
-    # Fetch latest release from GitHub
+    # Fetch latest release from GitHub (tagName + body)
+    release_notes = None
     try:
         r = subprocess.run(
-            ["gh", "release", "view", "--repo", "clawdbot/openclaw", "--json", "tagName"],
+            ["gh", "release", "view", "--repo", "clawdbot/openclaw",
+             "--json", "tagName,body,publishedAt"],
             capture_output=True, text=True, timeout=15
         )
         if r.returncode == 0:
-            latest_version = json.loads(r.stdout).get("tagName", "").lstrip("v")
+            data = json.loads(r.stdout)
+            latest_version = data.get("tagName", "").lstrip("v")
+            release_notes = {
+                "body": data.get("body", ""),
+                "published_at": data.get("publishedAt", ""),
+            }
     except (FileNotFoundError, subprocess.TimeoutExpired, json.JSONDecodeError):
         pass
 
@@ -260,7 +267,8 @@ def collect_openclaw_version() -> dict:
             local_version is not None and
             latest_version is not None and
             local_version != latest_version
-        )
+        ),
+        "release_notes": release_notes,  # None if fetch failed or no update
     }
 ```
 
@@ -443,11 +451,53 @@ user-invocable: true
 python3 -c "import json; d=json.load(open('data/signals.json')); print(f'采集时间: {d[\"collected_at\"]}  窗口: {d[\"window_days\"]}天  节点: {len(d[\"sources\"])}')"
 ```
 
-### 2. OpenClaw 版本检查
+### 2. OpenClaw 版本检查 + Release Notes 解析
 
-读取 `signals["openclaw_version"]`：
-- `update_available: true` → 说明 openclaw-dev 的 knowledgebase / node-operations skill 可能有过时内容
-- 将此列为 P0 issue：**需要同步新版本 API/命令变更**
+读取 `signals["openclaw_version"]`，若 `update_available: true`：
+
+```python
+import json, re
+d = json.load(open("data/signals.json"))
+ov = d["openclaw_version"]
+if ov["update_available"] and ov.get("release_notes"):
+    body = ov["release_notes"]["body"]
+
+    # 按变更类型分类
+    categories = {
+        "new_commands":    [],  # 新增 CLI 命令/flag
+        "deprecated":      [],  # 废弃项
+        "api_changes":     [],  # API/Plugin SDK 变更
+        "config_changes":  [],  # 配置 schema 变更
+        "breaking":        [],  # Breaking changes
+    }
+
+    for line in body.splitlines():
+        l = line.lower()
+        if any(k in l for k in ["new command", "add command", "new flag", "new option"]):
+            categories["new_commands"].append(line.strip())
+        elif any(k in l for k in ["deprecat", "removed", "废弃"]):
+            categories["deprecated"].append(line.strip())
+        elif any(k in l for k in ["api", "plugin sdk", "plugin api"]):
+            categories["api_changes"].append(line.strip())
+        elif any(k in l for k in ["config", "schema", "openclaw.json"]):
+            categories["config_changes"].append(line.strip())
+        elif any(k in l for k in ["breaking", "不兼容"]):
+            categories["breaking"].append(line.strip())
+
+    print(json.dumps(categories, indent=2, ensure_ascii=False))
+```
+
+变更类型 → 受影响的 skill/reference 映射：
+
+| 变更类型 | 需要更新的位置 |
+|---------|-------------|
+| `new_commands` / `new_flag` | `node-operations` SKILL.md + `references/install-and-debug.md` |
+| `deprecated` | 对应 reference 加 ⚠️ 废弃标注 |
+| `api_changes` | `knowledgebase/references/plugin-api.md` |
+| `config_changes` | `knowledgebase/references/core-concepts.md` |
+| `breaking` | 所有 4 个 skill 的 description 检查，优先级 P0 |
+
+输出列为 P0 issue：**需要按上表逐项更新 skill 内容**
 
 ### 3. Issue 聚类分析
 
