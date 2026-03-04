@@ -68,11 +68,17 @@ Knowledgebase = theory. Node-operations = hands-on. No overlap.
 
 `/diagnose` → log analysis → pattern match → append to `fault-patterns.md` → next `/diagnose` is smarter.
 
-### 15 Slash Commands
+### 13 User Commands + 3 Maintainer Commands
 
-`/diagnose` `/diagnose-openclaw` `/setup-node` `/lint-config` `/openclaw-status` `/evolve-skill` `/evolve-openclaw-capability` `/create-skill` `/deploy-skill` `/validate-skill` `/list-skills` `/scaffold-agent` `/scaffold-plugin` `/sync-knowledge` `/fleet-ssh`
+**User commands** (loaded by default):
 
-Commands are Markdown files with YAML frontmatter in `commands/`.
+`/diagnose` `/qa-agent` `/setup-node` `/lint-config` `/status` `/evolve-skill` `/create-skill` `/deploy-skill` `/validate-skill` `/list-skills` `/scaffold-agent` `/scaffold-plugin` `/fleet-ssh`
+
+**Maintainer commands** (loaded when `role: maintainer` in `openclaw-dev.local.md`):
+
+`/maintain-signals` `/maintain-evolve` `/maintain-sync`
+
+Commands are Markdown files with YAML frontmatter in `commands/` (user) and `commands/maintainer/` (maintainer).
 
 ### 3 Agents
 
@@ -90,6 +96,7 @@ Commands are Markdown files with YAML frontmatter in `commands/`.
 4. **Out-of-the-box**: One command to install (`bash install.sh`), zero manual config required for basic use. Local config (`openclaw-dev.local.md`) is optional customization, never a prerequisite.
 5. **Respect agent conventions**: Follow established agent ecosystem standards (MCP protocol, Skills/SKILL.md format, AGENTS.md for Codex, `.claude-plugin/` manifest). Do not invent custom mechanisms where a shared convention exists.
 6. **Native first**: Prefer OpenClaw's native commands (`openclaw doctor`, `openclaw health`, `openclaw status --deep`, etc.) over custom scripts that replicate the same logic. AI's role is reasoning, orchestration, and fallback — parse, correlate, and format native command output; only build custom logic when native tools genuinely lack the capability. Never reimplement what OpenClaw already provides; doing so violates Single Source of Truth.
+7. **Fewer steps, faster results (FSFR)**: Measure skill quality by real agent effort — reasoning turns, wrong-path retries, confusion points, context consumption. High effort means the skill's execution path is unclear or incomplete and must be improved. Design every skill and runbook for the weakest model that will execute it: use tiered execution (fast path first, fallback second), explicit degradation strategies, and decision tables over prose. This principle drives both evolution paths: `/evolve-skill` (OpenClaw product skills, signal source: session logs) and `/maintain-evolve` (openclaw-dev plugin skills, signal source: agent logs across Claude Code/Codex/Qwen). If a weak model cannot execute a runbook correctly, the runbook is broken.
 
 ## Iron Laws
 
@@ -120,4 +127,4 @@ Copy `openclaw-dev.local.md.example` to `.claude/openclaw-dev.local.md` and cust
 
 ### Multi-Gateway Management
 
-Configure multiple Gateways in `.claude/openclaw-dev.local.md` under the `gateways:` key. Commands `/diagnose`, `/openclaw-status`, and `/fleet-ssh` support `[gateway-name|ALL]` arguments for remote Gateway operations.
+Configure multiple Gateways in `.claude/openclaw-dev.local.md` under the `gateways:` key. Commands `/diagnose`, `/status`, and `/fleet-ssh` support `[gateway-name|ALL]` arguments for remote Gateway operations.

@@ -186,6 +186,34 @@ else
   exit 2
 fi
 
+# ── Cross-reference checks ──────────────────────────────────────────────────
+
+echo -e "\n${CYAN}━━━ Cross-Reference Checks ━━━${NC}"
+
+# Build list of existing command names from commands/ directory
+VALID_COMMANDS=""
+for cmd_file in "${REPO_ROOT}"/commands/*.md "${REPO_ROOT}"/commands/maintainer/*.md; do
+  [[ -f "$cmd_file" ]] || continue
+  local_name=$(grep -E '^name:' "$cmd_file" 2>/dev/null | head -1 | sed 's/^name:[[:space:]]*//' | tr -d '[:space:]"' || true)
+  if [[ -n "$local_name" ]]; then
+    VALID_COMMANDS="${VALID_COMMANDS} ${local_name}"
+  fi
+done
+
+# Check for references to old/deleted command names in active files
+OLD_COMMANDS="openclaw-status diagnose-openclaw evolve-openclaw-capability collect-signals evolve-openclaw-dev sync-knowledge"
+
+for old_cmd in $OLD_COMMANDS; do
+  # Search for /command-name as a standalone reference (preceded by space, backtick, or start of line)
+  # Exclude matches that are part of file paths (e.g., /scripts/collect-signals.py, /references/sync-knowledge-runbook.md)
+  matches=$(grep -rlE "(^|[[:space:]\`])/${old_cmd}([[:space:]\`\)\.]|$)" "${REPO_ROOT}/skills/" "${REPO_ROOT}/commands/" "${REPO_ROOT}/CLAUDE.md" "${REPO_ROOT}/README.md" 2>/dev/null | grep -v 'docs/plans' || true)
+  if [[ -n "$matches" ]]; then
+    error "Stale command reference '/${old_cmd}' found in: $(echo "$matches" | tr '\n' ', ')"
+  fi
+done
+
+ok "Cross-reference check complete"
+
 # ── Summary ─────────────────────────────────────────────────────────────────
 
 echo ""

@@ -309,20 +309,18 @@ openclaw plugins doctor             # Plugin 诊断
 
 ### 节点状态查询
 
+遵循 FSFR 原则，分层查询（详见 `references/status-runbook.md`）：
+
 ```bash
-# Agent 列表
-openclaw agents list --bindings
+# 环境探测（先确认 openclaw 是否可用）
+command -v openclaw && openclaw --version || echo "NO_OPENCLAW"
+test -f ~/.openclaw/openclaw.json && echo "HAS_CONFIG" || echo "NO_CONFIG"
 
-# 完整状态
-openclaw status --deep --all
+# 正常模式（openclaw 可用时，1 个命令获取 80% 信息）
+openclaw health && openclaw status --deep --all
 
-# Tailscale 网络
-tailscale status --json | jq '.Peer[] | {Name: .HostName, IP: .TailscaleIPs[0], Online: .Online}'
-
-# Session 活跃度
-for agent in $(jq -r '.agents.list[].id' ~/.openclaw/openclaw.json); do
-  echo "$agent: $(ls ~/.openclaw/agents/$agent/sessions/*.jsonl 2>/dev/null | wc -l | tr -d ' ') sessions"
-done
+# 降级模式（openclaw 不可用但 config 存在时）
+jq '{gateway: .gateway, agents: [.agents.list[] | {id,name,model}]}' ~/.openclaw/openclaw.json
 ```
 
 ## 操作 Runbooks
@@ -333,5 +331,5 @@ done
 |------|---------|------|
 | **系统性诊断** | `references/diagnose-runbook.md` | 5 步方法论分析 + 结构化报告 + 故障模式沉淀 |
 | **配置验证** | `references/lint-config-runbook.md` | 验证 openclaw.json 语法/安全/路径/Auth |
-| **状态仪表盘** | `references/status-runbook.md` | 全组件状态查询 + 格式化输出 |
+| **状态仪表盘** | `references/status-runbook.md` | 分层状态查询 (FSFR) + 降级策略 + 格式化输出 |
 

@@ -1,10 +1,12 @@
 ---
-name: sync-knowledge
-description: "Sync openclaw-dev knowledge base with upstream OpenClaw documentation changes"
+name: maintain-sync
+description: "Sync openclaw-dev knowledge base with upstream OpenClaw documentation changes."
 user-invocable: true
 ---
 
-# /sync-knowledge — 同步知识库
+# /maintain-sync — 同步知识库
+
+> **维护者命令**: 此命令仅在 `openclaw-dev.local.md` 设置 `role: maintainer` 时加载。
 
 读取 `openclaw-dev-knowledgebase` skill 的 `references/sync-knowledge-runbook.md`，将知识库与上游文档同步。
 

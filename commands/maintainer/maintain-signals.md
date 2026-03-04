@@ -1,11 +1,13 @@
 ---
-name: collect-signals
-description: "Collect evolution signals for openclaw-dev from GitHub Issues, local agent logs (Claude Code, Codex, Qwen, Antigravity, iFlow), and optional SSH remote nodes. Run before /evolve-openclaw-dev. Triggers: 'collect signals', 'gather data', 'update signals', 'prepare evolution data'."
+name: maintain-signals
+description: "Collect evolution signals for openclaw-dev from GitHub Issues, local agent logs (Claude Code, Codex, Qwen, Antigravity, iFlow), and optional SSH remote nodes. Run before /maintain-evolve."
 argument-hint: "[--agent all|claude|codex|qwen|antigravity|iflow] [--host user@remote] [--days 30] [--no-issues]"
 user-invocable: true
 ---
 
-# /collect-signals — 采集进化信号
+# /maintain-signals — 采集进化信号
+
+> **维护者命令**: 此命令仅在 `openclaw-dev.local.md` 设置 `role: maintainer` 时加载。
 
 从 GitHub Issues、本地 agent 日志、SSH 远程节点收集信号，输出 `data/signals.json`。
 
@@ -36,4 +38,4 @@ python3 scripts/collect-signals.py --agent all --days 30
 
 ## 采集完成后
 
-运行 `/evolve-openclaw-dev` 读取 `data/signals.json` 进行分析。
+运行 `/maintain-evolve` 读取 `data/signals.json` 进行分析。

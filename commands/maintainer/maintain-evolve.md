@@ -1,21 +1,23 @@
 ---
-name: evolve-openclaw-dev
-description: "Analyze collected signals (from /collect-signals) and generate a prioritized Evolution Report for openclaw-dev skills and commands. Triggers: 'evolve openclaw-dev', 'analyze signals', 'skill improvement report', 'what needs fixing', 'generate evolution report'."
+name: maintain-evolve
+description: "Analyze collected signals (from /maintain-signals) and generate a prioritized Evolution Report for openclaw-dev skills and commands."
 user-invocable: true
 ---
 
-# /evolve-openclaw-dev — 分析 + 生成进化报告
+# /maintain-evolve — 分析 + 生成进化报告
+
+> **维护者命令**: 此命令仅在 `openclaw-dev.local.md` 设置 `role: maintainer` 时加载。
 
 读取 `data/signals.json`，输出优先级排序的改进建议。
 
-**前置条件**: 先运行 `/collect-signals`。
+**前置条件**: 先运行 `/maintain-signals`。
 
 ## 分析流程
 
 ### 1. 检查信号文件
 
 ```bash
-[ -f data/signals.json ] || { echo "请先运行 /collect-signals"; exit 1; }
+[ -f data/signals.json ] || { echo "请先运行 /maintain-signals"; exit 1; }
 python3 -c "import json; d=json.load(open('data/signals.json')); print(f'采集时间: {d[\"collected_at\"]}  窗口: {d[\"window_days\"]}天  节点: {len(d[\"sources\"])}')"
 ```
 
@@ -109,30 +111,30 @@ for cmd, sig in d["command_signals"].items():
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🧬 openclaw-dev Evolution Report
+openclaw-dev Evolution Report
    采集时间: <collected_at> | 节点数: <n> | Sessions: <total>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🔄 OpenClaw 版本
+OpenClaw 版本
    本地: <local> | 最新: <latest>
    [如有更新] ⚠️ 需要同步新版本变更到 knowledgebase / node-operations
 
-📋 GitHub Issues (<n> open)
+GitHub Issues (<n> open)
    P0: #xx "..." [bug, <n>天]
    P1: #xx "..." [bug]
    P2: #xx "..." [enhancement]
 
-📊 Skill 触发质量
+Skill 触发质量
    <skill>: 触发率 x%, 错误率 y%  [状态]
 
-📉 Command 使用率 (零使用)
+Command 使用率 (零使用)
    /xxx: 0次 → 评估是否保留
 
-💡 改进建议 (优先级排序)
+改进建议 (优先级排序)
    1. [P0] ...
    2. [P1] ...
 
-⚡ 下一步
+下一步
    应用建议 → 逐条确认后编辑 SKILL.md / commands/
    验证     → bash scripts/skill-lint.sh skills/<name>
    发版     → git tag v2.x.x && git push && bash install.sh

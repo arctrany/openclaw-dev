@@ -48,6 +48,6 @@ bash scripts/codex-diagnose.sh --agent <agent-id> --quick
 
 ## Claude/OpenClaw 插件入口（已提供）
 
-- Command: `diagnose-openclaw`
-- Command: `evolve-openclaw-capability`
+- Command: `qa-agent`
+- Command: `qa-agent --fix`
 - Agent: `openclaw-capability-evolver`
