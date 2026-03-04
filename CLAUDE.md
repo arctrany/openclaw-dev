@@ -89,6 +89,7 @@ Commands are Markdown files with YAML frontmatter in `commands/`.
 3. **Portable**: No absolute paths anywhere — skill files, scripts, commands, CLAUDE.md, AGENTS.md. Use `$HOME`, `~`, `$PROJECT_ROOT`, or relative paths. `bash scripts/security-scan.sh` enforces this.
 4. **Out-of-the-box**: One command to install (`bash install.sh`), zero manual config required for basic use. Local config (`openclaw-dev.local.md`) is optional customization, never a prerequisite.
 5. **Respect agent conventions**: Follow established agent ecosystem standards (MCP protocol, Skills/SKILL.md format, AGENTS.md for Codex, `.claude-plugin/` manifest). Do not invent custom mechanisms where a shared convention exists.
+6. **Native first**: Prefer OpenClaw's native commands (`openclaw doctor`, `openclaw health`, `openclaw status --deep`, etc.) over custom scripts that replicate the same logic. AI's role is reasoning, orchestration, and fallback — parse, correlate, and format native command output; only build custom logic when native tools genuinely lack the capability. Never reimplement what OpenClaw already provides; doing so violates Single Source of Truth.
 
 ## Iron Laws
 
