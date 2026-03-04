@@ -39,6 +39,9 @@ plugins/qa/reports/
 .env
 .env.*
 
+# Security identity file (per-contributor, contains personal identifiers)
+.security-identities
+
 # Private keys and certificates
 *.pem
 *.key
@@ -48,3 +51,6 @@ id_ed25519*
 # Evolution signals (contains user paths, not for repo)
 data/signals.json
 data/signals.*.json
+
+# Plan docs (may contain personal info, paths, IPs)
+docs/plans/

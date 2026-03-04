@@ -35,9 +35,6 @@ should_skip() {
     */.git/*) return 0 ;;
     # Skip this script itself
     */security-scan.sh) return 0 ;;
-    # Skip example/template files
-    *.example) return 0 ;;
-    *.example.*) return 0 ;;
     # Skip binary files
     *.png|*.jpg|*.jpeg|*.gif|*.ico|*.woff|*.woff2|*.ttf|*.eot) return 0 ;;
     # Skip generated platform dirs (should be gitignored, but double-check)
@@ -102,6 +99,17 @@ PRIVACY_PATTERNS=(
   '\b[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\b' # IPv4
   'BEGIN .*(PRIVATE KEY|CERTIFICATE)'                     # Private key / cert
 )
+
+# 4. Identity patterns (usernames, hostnames)
+IDENTITY_PATTERNS_FILE="${REPO_ROOT}/.security-identities"
+IDENTITY_STRINGS=()
+if [[ -f "$IDENTITY_PATTERNS_FILE" ]]; then
+  while IFS= read -r id_line; do
+    # Skip comments and empty lines
+    [[ -z "$id_line" || "$id_line" == \#* ]] && continue
+    IDENTITY_STRINGS+=("$id_line")
+  done < "$IDENTITY_PATTERNS_FILE"
+fi
 
 # Context-aware whitelist for privacy patterns (skip if line matches these)
 PRIVACY_WHITELIST=(
@@ -227,6 +235,16 @@ while IFS= read -r file; do
         break
       fi
     done
+
+    # 4. Identity check (custom per-repo banned strings)
+    if [[ ${#IDENTITY_STRINGS[@]} -gt 0 ]]; then
+      for id_str in "${IDENTITY_STRINGS[@]}"; do
+        if echo "$line" | grep -q -i -F -- "$id_str"; then
+          log_violation "IDENTITY_LEAK" "$file" "$line_num" "$line"
+          break
+        fi
+      done
+    fi
 
   done < "$full_path"
 done <<< "$FILES"

@@ -1,0 +1,9 @@
+# .security-identities — Banned identity strings for security-scan.sh
+# Copy to .security-identities and add your personal identifiers.
+# One string per line, case-insensitive exact match.
+# Lines starting with # are comments.
+#
+# Examples:
+# jdoe
+# jdoes-macbook
+# john.doe
