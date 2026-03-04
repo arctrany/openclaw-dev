@@ -68,9 +68,9 @@ Knowledgebase = theory. Node-operations = hands-on. No overlap.
 
 `/diagnose` → log analysis → pattern match → append to `fault-patterns.md` → next `/diagnose` is smarter.
 
-### 14 Slash Commands
+### 15 Slash Commands
 
-`/diagnose` `/diagnose-openclaw` `/setup-node` `/lint-config` `/openclaw-status` `/evolve-skill` `/evolve-openclaw-capability` `/create-skill` `/deploy-skill` `/validate-skill` `/list-skills` `/scaffold-agent` `/scaffold-plugin` `/sync-knowledge`
+`/diagnose` `/diagnose-openclaw` `/setup-node` `/lint-config` `/openclaw-status` `/evolve-skill` `/evolve-openclaw-capability` `/create-skill` `/deploy-skill` `/validate-skill` `/list-skills` `/scaffold-agent` `/scaffold-plugin` `/sync-knowledge` `/fleet-ssh`
 
 Commands are Markdown files with YAML frontmatter in `commands/`.
 
@@ -116,3 +116,7 @@ Commands are Markdown files with YAML frontmatter in `commands/`.
 ## Local Config
 
 Copy `openclaw-dev.local.md.example` to `.claude/openclaw-dev.local.md` and customize workspace paths, author info, and deployment directories. This file is gitignored.
+
+### Multi-Gateway Management
+
+Configure multiple Gateways in `.claude/openclaw-dev.local.md` under the `gateways:` key. Commands `/diagnose`, `/openclaw-status`, and `/fleet-ssh` support `[gateway-name|ALL]` arguments for remote Gateway operations.
