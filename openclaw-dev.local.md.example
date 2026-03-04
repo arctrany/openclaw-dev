@@ -14,6 +14,28 @@ deployment:
 testing:
   auto_validate: true
   run_verification: true
+
+gateways:
+  - name: local
+    host: 127.0.0.1
+    gateway_port: 18789
+
+  - name: home-mac
+    host: 192.168.1.100
+    gateway_port: 18789
+    ssh_port: 22
+    ssh_user: haowu
+    ssh_key: ~/.ssh/id_ed25519
+    gateway_token_env: HOME_MAC_GW_TOKEN
+    tags: [home, dev]
+
+  - name: cloud-server
+    host: 10.0.0.5
+    gateway_port: 18789
+    ssh_port: 22
+    ssh_user: root
+    gateway_token_env: CLOUD_GW_TOKEN
+    tags: [cloud, production]
 ---
 
 # OpenClaw-Dev Local Configuration
@@ -58,6 +80,34 @@ Run verification scripts after deployment.
 
 Default: `true`
 
+## Gateways Configuration
+
+Multi-Gateway management for `/diagnose`, `/openclaw-status`, `/fleet-ssh`.
+
+### gateways[].name
+Gateway alias, used as command argument (e.g., `/diagnose home-mac`).
+
+### gateways[].host
+IP address, hostname, Tailscale MagicDNS name, or SSH config alias.
+
+### gateways[].gateway_port
+OpenClaw Gateway port. Default: `18789`
+
+### gateways[].ssh_port
+SSH daemon port for remote connections. Default: `22`
+
+### gateways[].ssh_user
+SSH username for remote gateways. Required for non-local gateways.
+
+### gateways[].ssh_key
+Path to SSH private key. Default: system default.
+
+### gateways[].gateway_token_env
+Environment variable name containing the Gateway auth token. Never store tokens directly — use env vars.
+
+### gateways[].tags
+Optional tags for future grouping support (e.g., `[cloud, production]`).
+
 ## Usage
 
 This configuration is read by openclaw-dev commands:
@@ -65,6 +115,9 @@ This configuration is read by openclaw-dev commands:
 - `/create-skill` - Uses openclaw.workspace_path and default_agent
 - `/deploy-skill` - Uses deployment paths
 - `/validate-plugin` - Uses testing.auto_validate setting
+- `/diagnose` - Uses gateways for remote diagnosis
+- `/openclaw-status` - Uses gateways for remote status queries
+- `/fleet-ssh` - Uses gateways for interactive SSH connections
 
 ## Notes
 
