@@ -2,7 +2,7 @@
 name: maintain-signals
 description: "Collect evolution signals for openclaw-dev from GitHub Issues, local agent logs (Claude Code, Codex, Qwen, Antigravity, iFlow), and optional SSH remote nodes. Run before /maintain-evolve."
 argument-hint: "[--agent all|claude|codex|qwen|antigravity|iflow] [--host user@remote] [--days 30] [--no-issues]"
-user-invocable: true
+user-invocable: false
 ---
 
 # /maintain-signals — 采集进化信号

@@ -1,7 +1,7 @@
 ---
 name: maintain-sync
 description: "Sync openclaw-dev knowledge base with upstream OpenClaw documentation changes."
-user-invocable: true
+user-invocable: false
 ---
 
 # /maintain-sync — 同步知识库

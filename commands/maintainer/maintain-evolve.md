@@ -1,7 +1,7 @@
 ---
 name: maintain-evolve
 description: "Analyze collected signals (from /maintain-signals) and generate a prioritized Evolution Report for openclaw-dev skills and commands."
-user-invocable: true
+user-invocable: false
 ---
 
 # /maintain-evolve — 分析 + 生成进化报告
