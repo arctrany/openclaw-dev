@@ -24,7 +24,7 @@ gateways:
     host: 192.168.1.100
     gateway_port: 18789
     ssh_port: 22
-    ssh_user: haowu
+    ssh_user: your-username
     ssh_key: ~/.ssh/id_ed25519
     gateway_token_env: HOME_MAC_GW_TOKEN
     tags: [home, dev]
