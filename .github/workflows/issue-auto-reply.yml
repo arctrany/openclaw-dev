@@ -105,6 +105,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
           CLASSIFY_CATEGORY: ${{ steps.classify.outputs.category }}
           CLASSIFY_SKILLS: ${{ steps.classify.outputs.skills }}
           CLASSIFY_LABELS: ${{ steps.classify.outputs.labels }}
@@ -145,14 +146,14 @@ jobs:
 
             const userMessage = `Issue #${issue.number}: ${issue.title}\n\n${issue.body || '(无描述)'}\n\nClassified as: ${category}\nRelated skills: ${skills.join(', ') || 'none detected'}`;
 
-            // Call GitHub Models API (GLM-5 via Qwen/Bailian Coding Plan)
-            const modelId = 'bailian/glm-5';
+            // Call DashScope API (GLM-5 via Bailian Coding Plan)
+            const modelId = 'glm-5';
 
             try {
-              const response = await fetch('https://models.github.ai/inference/chat/completions', {
+              const response = await fetch('https://coding.dashscope.aliyuncs.com/v1/chat/completions', {
                 method: 'POST',
                 headers: {
-                  'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+                  'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY}`,
                   'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
