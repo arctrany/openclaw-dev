@@ -138,8 +138,8 @@ OpenClaw   <hostname>
 
 ```
   检测到 Tailscale 节点（可直接添加为 gateway）：
-    sophia-mini   100.116.161.3
-    mini          100.92.217.43
+    sophia-mini   <tailscale-ip-1>
+    mini          <tailscale-ip-2>
 ```
 
 Tailscale 探测命令：
@@ -317,7 +317,7 @@ control_center_status: not_installed  # 或 installed
 ```yaml
 gateways:
   - name: sophia-mini
-    host: 100.116.161.3
+    host: <tailscale-ip>
     ssh_port: 22
     ssh_user: <当前用户>
 ```
