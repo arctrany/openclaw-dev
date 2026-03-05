@@ -72,7 +72,7 @@ Knowledgebase = theory. Node-operations = hands-on. No overlap.
 
 **User commands** (loaded by default):
 
-`/diagnose` `/qa-agent` `/setup-node` `/lint-config` `/status` `/evolve-skill` `/create-skill` `/deploy-skill` `/validate-skill` `/list-skills` `/scaffold-agent` `/scaffold-plugin` `/fleet-ssh`
+`/diagnose` `/qa-agent` `/setup-node` `/lint-config` `/status` `/evolve-skill` `/create-skill` `/deploy-skill` `/validate-skill` `/list-skills` `/scaffold-agent` `/scaffold-plugin` `/watch`
 
 **Maintainer commands** (loaded when `role: maintainer` in `openclaw-dev.local.md`):
 
@@ -127,4 +127,4 @@ Copy `openclaw-dev.local.md.example` to `.claude/openclaw-dev.local.md` and cust
 
 ### Multi-Gateway Management
 
-Configure multiple Gateways in `.claude/openclaw-dev.local.md` under the `gateways:` key. Commands `/diagnose`, `/status`, and `/fleet-ssh` support `[gateway-name|ALL]` arguments for remote Gateway operations.
+Configure multiple Gateways in `.claude/openclaw-dev.local.md` under the `gateways:` key. Commands `/diagnose`, `/status`, and `/watch` support `[gateway-name|ALL]` arguments for remote Gateway operations.

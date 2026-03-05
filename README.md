@@ -91,14 +91,14 @@ Gateway、Agents、Channels、Plugins 的统一状态视图。支持多 Gateway 
 
 分析 session 日志，找到 skill 的触发率、错误率、改进方向，数据驱动优化。
 
-### 多 Gateway 管理
+### Fleet 实时监控
 
 ```
-/fleet-ssh
+/watch
 /status ALL
 ```
 
-跨多台 Gateway 的 SSH 连接和状态查询。
+持久化 tmux 分屏监控面板，实时查看远程节点状态。打开即常驻，所有远程操作可视化。
 
 ## 全部命令
 
@@ -116,7 +116,7 @@ Gateway、Agents、Channels、Plugins 的统一状态视图。支持多 Gateway 
 | `/list-skills` | 列出所有 skill |
 | `/scaffold-agent` | 脚手架 agent |
 | `/scaffold-plugin` | 脚手架 plugin |
-| `/fleet-ssh` | 多 Gateway SSH |
+| `/watch` | Fleet 实时监控面板 |
 
 ## 跨 OS 支持
 

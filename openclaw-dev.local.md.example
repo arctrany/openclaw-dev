@@ -84,9 +84,9 @@ Default: `true`
 
 ## Gateways Configuration
 
-Multi-Gateway management for `/diagnose`, `/status`, `/fleet-ssh`.
+Multi-Gateway management for `/diagnose`, `/status`, `/watch`.
 
-首次使用 `/fleet-ssh` 连接远程 gateway 时，会自动检测 SSH 免密登录状态。如果需要密码认证，会引导你完成公钥部署（需要 sshpass），后续连接将自动免密。
+首次使用 `/watch` 连接远程 gateway 时，会自动检测 SSH 免密登录状态。如果需要密码认证，会引导你完成公钥部署（需要 sshpass），后续连接将自动免密。
 
 ### control_center_status
 Auto-detected by `/status`. Values: `not_installed` | `installed`. Do not edit manually — cleared automatically when OpenClaw is installed via `/setup-node`.
@@ -124,7 +124,7 @@ This configuration is read by openclaw-dev commands:
 - `/validate-plugin` - Uses testing.auto_validate setting
 - `/diagnose` - Uses gateways for remote diagnosis
 - `/status` - Uses gateways for remote status queries and caches control_center_status
-- `/fleet-ssh` - Fleet 监控面板，tmux 分屏实时查看远程节点诊断输出
+- `/watch` - Fleet 实时监控面板，持久化分屏界面实时查看远程节点状态
 
 ## Notes
 

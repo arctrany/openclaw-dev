@@ -62,18 +62,27 @@ PATH_WHITELIST=(
   'grep.*"/Volumes/'           # grep command checking for /Volumes/
   '不应在.*Volumes'             # diagnostic guidance: should not be on /Volumes
   '禁止.*Volumes'               # diagnostic guidance: forbidden on /Volumes
+  'Volumes.*禁止'               # diagnostic guidance: /Volumes ... forbidden (reversed order)
   'Forbidden.*Volumes'         # English equivalent
   '<disk-name>'                # placeholder: /Volumes/<disk-name>
   'echo.*Volumes'              # echo/warning about /Volumes
+  'must not reference'         # anti-pattern documentation: "must not reference /Volumes/..."
+  'Forbidden.*Compliant'       # "Forbidden vs Compliant" table header
+  '`/Users/xxx'                # placeholder path in docs: /Users/xxx/
+  'grep -nE'                   # grep pattern in lint scripts
+  '/Users/\[' # regex pattern like /Users/[^$] in scan scripts
 )
 
 is_whitelisted_path() {
   local line="$1"
+  shopt -s nocasematch
   for wl in "${PATH_WHITELIST[@]}"; do
-    if echo "$line" | grep -qiE "$wl"; then
+    if [[ "$line" =~ $wl ]]; then
+      shopt -u nocasematch
       return 0
     fi
   done
+  shopt -u nocasematch
   return 1
 }
 
@@ -133,15 +142,20 @@ PRIVACY_WHITELIST=(
   '192\.168\.'             # Private LAN (documentation)
   '172\.1[6-9]\.|172\.2[0-9]\.|172\.3[01]\.'  # Private LAN (documentation)
   '169\.254\.'             # Link-local (documentation)
+  'Forbidden.*Compliant'   # "Forbidden vs Compliant" table in docs
+  '\$GOOGLE_DRIVE'          # anti-pattern doc: user@gmail.com → $GOOGLE_DRIVE_ACCOUNT
 )
 
 is_whitelisted_privacy() {
   local line="$1"
+  shopt -s nocasematch
   for wl in "${PRIVACY_WHITELIST[@]}"; do
-    if echo "$line" | grep -qiE "$wl"; then
+    if [[ "$line" =~ $wl ]]; then
+      shopt -u nocasematch
       return 0
     fi
   done
+  shopt -u nocasematch
   return 1
 }
 
@@ -168,13 +182,35 @@ SECRET_WHITELIST=(
 
 is_whitelisted_secret() {
   local line="$1"
+  shopt -s nocasematch
   for wl in "${SECRET_WHITELIST[@]}"; do
-    if echo "$line" | grep -qiE "$wl"; then
+    if [[ "$line" =~ $wl ]]; then
+      shopt -u nocasematch
       return 0
     fi
   done
+  shopt -u nocasematch
   return 1
 }
+
+# ── Build combined patterns (join arrays with |) ────────────────────────────
+
+join_patterns() {
+  local IFS='|'
+  echo "$*"
+}
+
+COMBINED_PATH="$(join_patterns "${PATH_PATTERNS[@]}")"
+COMBINED_SECRET="$(join_patterns "${SECRET_PATTERNS[@]}")"
+COMBINED_PRIVACY="$(join_patterns "${PRIVACY_PATTERNS[@]}")"
+
+# Build identity grep file (if any)
+IDENTITY_TMP=""
+if [[ ${#IDENTITY_STRINGS[@]} -gt 0 ]]; then
+  IDENTITY_TMP=$(mktemp)
+  printf '%s\n' "${IDENTITY_STRINGS[@]}" > "$IDENTITY_TMP"
+  trap 'rm -f "$IDENTITY_TMP"' EXIT
+fi
 
 # ── Main scan ───────────────────────────────────────────────────────────────
 
@@ -203,52 +239,35 @@ while IFS= read -r file; do
   esac
 
   TOTAL_FILES=$((TOTAL_FILES + 1))
-  line_num=0
 
-  while IFS= read -r line; do
-    line_num=$((line_num + 1))
-
-    # 1. Path leak check
-    for pattern in "${PATH_PATTERNS[@]}"; do
-      if echo "$line" | grep -q -E -e "$pattern"; then
-        if ! is_whitelisted_path "$line"; then
-          log_violation "PERSONAL_PATH" "$file" "$line_num" "$line"
-        fi
-        break
-      fi
-    done
-
-    # 2. Secret check (with whitelist)
-    for pattern in "${SECRET_PATTERNS[@]}"; do
-      if echo "$line" | grep -q -E -i -e "$pattern"; then
-        if ! is_whitelisted_secret "$line"; then
-          log_violation "SECRET_LEAK" "$file" "$line_num" "$line"
-        fi
-        break
-      fi
-    done
-
-    # 3. Privacy check (with whitelist)
-    for pattern in "${PRIVACY_PATTERNS[@]}"; do
-      if echo "$line" | grep -q -E -e "$pattern"; then
-        if ! is_whitelisted_privacy "$line"; then
-          log_violation "PRIVACY_INFO" "$file" "$line_num" "$line"
-        fi
-        break
-      fi
-    done
-
-    # 4. Identity check (custom per-repo banned strings)
-    if [[ ${#IDENTITY_STRINGS[@]} -gt 0 ]]; then
-      for id_str in "${IDENTITY_STRINGS[@]}"; do
-        if echo "$line" | grep -q -i -F -- "$id_str"; then
-          log_violation "IDENTITY_LEAK" "$file" "$line_num" "$line"
-          break
-        fi
-      done
+  # 1. Path leak check — one grep per file
+  while IFS=: read -r line_num content; do
+    if ! is_whitelisted_path "$content"; then
+      log_violation "PERSONAL_PATH" "$file" "$line_num" "$content"
     fi
+  done < <(grep -nE "$COMBINED_PATH" "$full_path" 2>/dev/null || true)
 
-  done < "$full_path"
+  # 2. Secret check — one grep per file
+  while IFS=: read -r line_num content; do
+    if ! is_whitelisted_secret "$content"; then
+      log_violation "SECRET_LEAK" "$file" "$line_num" "$content"
+    fi
+  done < <(grep -niE "$COMBINED_SECRET" "$full_path" 2>/dev/null || true)
+
+  # 3. Privacy check — one grep per file
+  while IFS=: read -r line_num content; do
+    if ! is_whitelisted_privacy "$content"; then
+      log_violation "PRIVACY_INFO" "$file" "$line_num" "$content"
+    fi
+  done < <(grep -nE "$COMBINED_PRIVACY" "$full_path" 2>/dev/null || true)
+
+  # 4. Identity check — one grep per file
+  if [[ -n "$IDENTITY_TMP" ]]; then
+    while IFS=: read -r line_num content; do
+      log_violation "IDENTITY_LEAK" "$file" "$line_num" "$content"
+    done < <(grep -niF -f "$IDENTITY_TMP" "$full_path" 2>/dev/null || true)
+  fi
+
 done <<< "$FILES"
 
 # ── Summary ─────────────────────────────────────────────────────────────────

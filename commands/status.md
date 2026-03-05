@@ -340,7 +340,7 @@ LLM 直接读取，按 `(视图, 主信号)` 二元组定位，O(1) 查表。记
 L0-fleet:
   healthy:
     /status sophia-mini: 12
-    /fleet-ssh: 8
+    /watch: 8
     /status mini: 3
   gateway-down:
     /diagnose: 19
@@ -461,7 +461,7 @@ Fleet Status   2026-03-05 14:35
 | `gateway-just-restarted` | 提示等待稳定（uptime < 5min），可选 `/status <name>` 稍后复查 |
 | `not-installed` | `/setup-node` |
 | `recovered` | `/status <name>` — 确认恢复详情 |
-| `healthy` (L0) | `/status <最常用gateway>`, `/fleet-ssh` |
+| `healthy` (L0) | `/status <最常用gateway>`, `/watch` |
 | `healthy` (L1) | `/status <name> agents\|channels\|plugins\|nodes`（按用户历史） |
 | `healthy` (L2-agents) | `/deploy-skill <agent>`, `/list-skills <agent>` |
 | `healthy` (L2-channels) | `/status <name>` 返回概览 |
@@ -518,7 +518,7 @@ Fleet Status   2026-03-05 14:35
 ────────────────────────────────────────────────────
 下一步
   /status sophia-mini           — 查看 gateway 详情
-  /fleet-ssh                    — 进入 fleet 管控面板
+  /watch                    — 进入 fleet 管控面板
   /setup-node                   — 在本机安装 OpenClaw
 ────────────────────────────────────────────────────
 ```
