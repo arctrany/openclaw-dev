@@ -15,8 +15,10 @@ testing:
   auto_validate: true
   run_verification: true
 
+control_center_status: not_installed  # auto-detected by /status; do not edit manually
+
 gateways:
-  - name: local
+  - name: control-center
     host: 127.0.0.1
     gateway_port: 18789
 
@@ -82,7 +84,12 @@ Default: `true`
 
 ## Gateways Configuration
 
-Multi-Gateway management for `/diagnose`, `/openclaw-status`, `/fleet-ssh`.
+Multi-Gateway management for `/diagnose`, `/status`, `/fleet-ssh`.
+
+首次使用 `/fleet-ssh` 连接远程 gateway 时，会自动检测 SSH 免密登录状态。如果需要密码认证，会引导你完成公钥部署（需要 sshpass），后续连接将自动免密。
+
+### control_center_status
+Auto-detected by `/status`. Values: `not_installed` | `installed`. Do not edit manually — cleared automatically when OpenClaw is installed via `/setup-node`.
 
 ### gateways[].name
 Gateway alias, used as command argument (e.g., `/diagnose home-mac`).
@@ -116,8 +123,8 @@ This configuration is read by openclaw-dev commands:
 - `/deploy-skill` - Uses deployment paths
 - `/validate-plugin` - Uses testing.auto_validate setting
 - `/diagnose` - Uses gateways for remote diagnosis
-- `/openclaw-status` - Uses gateways for remote status queries
-- `/fleet-ssh` - Uses gateways for interactive SSH connections
+- `/status` - Uses gateways for remote status queries and caches control_center_status
+- `/fleet-ssh` - Fleet 监控面板，tmux 分屏实时查看远程节点诊断输出
 
 ## Notes
 

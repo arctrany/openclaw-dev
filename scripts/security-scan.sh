@@ -162,6 +162,8 @@ SECRET_WHITELIST=(
   '[A-Z]+_TOKEN'               # ACME_TOKEN, GATEWAY_TOKEN, etc.
   'EXAMPLE'
   'NOT_A_REAL'
+  '\$\{[0-9]'                  # bash positional params: ${1:-}, ${4:-}
+  '\$\{[A-Z_]+:-'              # bash default values: ${VAR:-default}
 )
 
 is_whitelisted_secret() {
