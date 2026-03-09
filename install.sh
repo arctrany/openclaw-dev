@@ -28,24 +28,61 @@ echo ""
 
 INSTALLED=0
 
-# Helper: copy skills to target dir (overwrite if exists)
-copy_skills() {
+# Helper: apply manifest-based clean sync to a directory
+sync_manifest() {
   local target="$1"
+  local type="$2" # "skills" or "commands"
+  local source_dir="$3"
+  local manifest_file="$target/.openclaw-dev.manifest"
+  
   mkdir -p "$target"
-  for skill in "$SKILLS_DIR"/*/; do
-    local name=$(basename "$skill")
-    rm -rf "$target/$name"
-    cp -rp "$skill" "$target/$name"
+  
+  # 1. Gather current items from source
+  local current_items=""
+  if [ "$type" = "skills" ]; then
+    for item in "$source_dir"/*/; do
+      [ -d "$item" ] && current_items="$current_items $(basename "$item")"
+    done
+  else
+    for item in "$source_dir/"*.md; do
+      [ -f "$item" ] && current_items="$current_items $(basename "$item")"
+    done
+  fi
+
+  # 2. Prune old items not in current_items
+  if [ -f "$manifest_file" ]; then
+    local old_items=$(cat "$manifest_file")
+    for old_item in $old_items; do
+      if [[ ! " $current_items " =~ " $old_item " ]]; then
+        echo "     🗑  Pruning removed $type: $old_item"
+        rm -rf "$target/$old_item"
+      fi
+    done
+  fi
+  
+  # 3. Copy new/updated items
+  for item in $current_items; do
+    if [ "$type" = "skills" ]; then
+      rm -rf "$target/$item" >/dev/null 2>&1 || true
+      cp -rp "$source_dir/$item" "$target/$item" >/dev/null 2>&1 || echo "     ⚠️  Warning: Could not update $type/$item (Permission denied?)"
+    else
+      rm -f "$target/$item" >/dev/null 2>&1 || true
+      cp -p "$source_dir/$item" "$target/$item" >/dev/null 2>&1 || echo "     ⚠️  Warning: Could not update $type/$item (Permission denied?)"
+    fi
   done
+  
+  # 4. Save new manifest
+  echo "$current_items" > "$manifest_file" 2>/dev/null || echo "     ⚠️  Warning: Could not save manifest to $target (Permission denied?)"
 }
 
-# Helper: copy commands to target dir
+# Helper: copy skills to target dir (clean refresh)
+copy_skills() {
+  sync_manifest "$1" "skills" "$SKILLS_DIR"
+}
+
+# Helper: copy commands to target dir (clean refresh)
 copy_commands() {
-  local target="$1"
-  mkdir -p "$target"
-  for cmd in "$COMMANDS_DIR/"*.md; do
-    cp -f "$cmd" "$target/$(basename "$cmd")"
-  done
+  sync_manifest "$1" "commands" "$COMMANDS_DIR"
 }
 
 # ─────────────────────────────────────────

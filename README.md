@@ -23,7 +23,11 @@ cd openclaw-dev && bash install.sh
 
 自动检测已安装的 agent 并分发到各平台的约定目录。
 
-**更新：** `cd openclaw-dev && git pull && bash install.sh`
+**更新（干净刷新）：** `cd openclaw-dev && git pull && bash install.sh`
+
+> 安装器使用 **清单同步（Manifest Sync）** — 自动追踪已安装的 skills 和 commands。
+> 当你删除某个 skill 后重新运行 `install.sh`，旧版本会从目标平台目录被**精准清理**，不留幽灵文件。
+> 用户在目标目录下自建的 skill 不受影响。
 
 ## 安装后做什么？
 
@@ -135,6 +139,14 @@ Gateway、Agents、Channels、Plugins 的统一状态视图。支持多 Gateway 
 - 部署目录
 
 ## 更新日志
+
+### v2.2.0 (2026-03-09)
+
+**Install 重构 — 干净刷新语义（Manifest Sync）**：
+- `install.sh` 改为清单驱动同步，每次安装后在目标目录写入 `.openclaw-dev.manifest`
+- 再次运行时自动对比清单，精准删除已经从仓库移除的 skill / command（零幽灵文件）
+- 用户自建 skill 不在清单范围，绝不误删
+- 幂等性：无论运行多少次，目标目录状态始终与仓库完全一致
 
 ### v2.1.0 (2026-03-04)
 
