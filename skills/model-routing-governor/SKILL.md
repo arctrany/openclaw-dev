@@ -31,6 +31,8 @@ Use this skill to build or maintain a routing system that can be shared across C
 
 ## Quick Start
 
+> **Note**: 以下命令均从项目根目录执行。路径 `skills/model-routing-governor/` 是相对于 openclaw-dev 仓库根目录的，部署到其他位置时需相应调整。日常使用推荐 `scripts/oc-route.py` wrapper（见第 6 步）。
+
 1. Validate policy files:
 
 ```bash

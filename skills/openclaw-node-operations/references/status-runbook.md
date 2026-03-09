@@ -111,7 +111,10 @@ Plugins (<N> loaded, <M> errors)
 ```bash
 for gw_name in "${GATEWAYS[@]}"; do
   (
-    ssh $SSH_OPTS ${ssh_user}@${host} \
+    # 使用完整 SSH 命令模板，每个 -o 独立参数
+    ssh -o ConnectTimeout=10 -o BatchMode=yes \
+        -o ControlMaster=auto -o ControlPath=/tmp/oc-ssh-%r@%h:%p -o ControlPersist=300 \
+        -p <ssh_port|22> <ssh_user>@<host> \
       "openclaw health 2>&1; openclaw status --deep --all 2>&1"
   ) > "/tmp/oc-status-$gw_name" 2>&1 &
 done

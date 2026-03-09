@@ -1,7 +1,7 @@
 ---
 name: openclaw-node-operations
 description: "Use this skill when asked to install OpenClaw, set up a node, configure a Gateway, onboard a new machine, debug OpenClaw issues (read logs, run doctor, health checks, diagnose faults), fix Gateway problems, set up networking (Tailscale, SSH tunnels), check node status, troubleshoot connectivity, configure remote access, deploy on Linux/Windows/macOS, lint config, validate openclaw.json, check fleet status, query agent/channel/plugin status, or run systematic diagnostics. Also use for: 'diagnose OpenClaw', 'lint my config', 'validate configuration', 'show status', 'fleet status', 'Gateway health', 'check OpenClaw health'. Covers hands-on operations: installation, onboarding, Gateway service management, remote access, cross-OS support, debugging, monitoring, diagnostics, config validation. For architecture/theory questions use openclaw-dev-knowledgebase instead."
-metadata: {"clawdbot":{"always":false,"emoji":"🖥️"}}
+metadata: {"clawdbot":{"always":false,"emoji":"🖥️","requires":{"bins":["jq","ssh"]}}}
 user-invocable: true
 version: 3.0.0
 ---

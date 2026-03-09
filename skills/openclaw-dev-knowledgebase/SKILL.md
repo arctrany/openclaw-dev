@@ -1,7 +1,7 @@
 ---
 name: openclaw-dev-knowledgebase
 description: "Use this skill when the user asks about OpenClaw architecture overview, how OpenClaw works internally, session model, channel concepts, workspace structure, agent routing internals, plugin API design (openclaw.plugin.json, api.register*), agent configuration schema (agents.list[], bindings), multi-agent delegation model, SOUL.md/AGENTS.md/USER.md persona design, memory search internals, cron/heartbeat mechanisms, hooks/webhooks architecture, browser automation model, tool policy design, sandbox security model, node pairing protocol, discovery protocol, CLI command reference, source code structure, building from source, testing, releasing, or any OpenClaw internals/theory question. Also use for: 'create an agent', 'scaffold agent', 'create a plugin', 'scaffold plugin', 'sync knowledge', 'update knowledge base'. For hands-on operations (install, debug, configure, fix, diagnose, set up networking) use openclaw-node-operations instead."
-metadata: {"clawdbot":{"always":false,"emoji":"📚"}}
+metadata: {"clawdbot":{"always":false,"emoji":"📚","requires":{"bins":["jq"]}}}
 user-invocable: true
 version: 4.0.0
 ---

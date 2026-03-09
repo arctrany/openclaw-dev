@@ -18,3 +18,18 @@ argument-hint: [agent-id]
 6. 重启 Gateway + 验证
 
 完整步骤见 `references/scaffold-agent-guide.md`。
+
+## Fallback（reference 不可用时）
+
+若无法加载 guide，执行以下核心步骤：
+
+1. 收集 agent ID、model、用途描述
+2. 备份配置：`cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak`
+3. 创建 workspace：`mkdir -p ~/.openclaw/workspaces/workspace-<agent-id>/skills`
+4. 创建 persona 文件（至少 SOUL.md）
+5. 用 jq 添加 agent 到 openclaw.json：
+```bash
+jq '.agents.list += [{"id":"<agent-id>","model":"<model>","workspace":"~/.openclaw/workspaces/workspace-<agent-id>"}]' \
+  ~/.openclaw/openclaw.json > /tmp/oc-tmp.json && mv /tmp/oc-tmp.json ~/.openclaw/openclaw.json
+```
+6. 重启 Gateway：`openclaw restart`

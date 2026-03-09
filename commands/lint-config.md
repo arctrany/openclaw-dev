@@ -18,3 +18,19 @@ user-invocable: true
 5. Auth Profile 完整性
 
 完整步骤和输出模板见 `references/lint-config-runbook.md`。
+
+## Fallback（reference 不可用时）
+
+若无法加载 runbook，直接执行以下核心检查：
+
+```bash
+# 1. JSON 语法
+jq . ~/.openclaw/openclaw.json > /dev/null 2>&1 && echo "✅ JSON valid" || echo "❌ JSON invalid"
+
+# 2. 必要字段
+jq -e '.agents.list | length > 0' ~/.openclaw/openclaw.json > /dev/null 2>&1 && echo "✅ agents.list exists" || echo "❌ agents.list missing"
+jq -r '.agents.list[] | "\(.id) → \(.model // "NO MODEL")"' ~/.openclaw/openclaw.json
+
+# 3. 安全：bind 地址检查
+jq -r '.gateway.host // "未配置"' ~/.openclaw/openclaw.json | grep -q '0.0.0.0' && echo "⚠️ Gateway bind 0.0.0.0（公网暴露）" || echo "✅ bind 地址安全"
+```

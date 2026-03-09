@@ -21,28 +21,31 @@ user-invocable: true
 
 ## 缓存层 — 读取
 
-在任何探测命令之前，先读 `.claude/openclaw-dev.local.md` YAML frontmatter：
+**Step 1**: 用 Read tool 读取 `.claude/openclaw-dev.local.md`。
 
-```
-control_center_status: not_installed | installed
-gateways:            # 与 gateways 配置块共用，缓存已知节点
-```
+**Step 2**: 判定缓存是否命中 — 以下条件**全部满足**即为命中：
+1. 文件存在（Read 未报错）
+2. 文件包含 YAML frontmatter（`---` 包裹的头部）
+3. frontmatter 中存在 `control_center_status` 字段，值为 `not_installed` 或 `installed`
+
+**缓存命中** → 直接使用 `control_center_status` 的值，**跳过**本地 bash 环境探测。
+**缓存未命中**（文件不存在 或 缺少 `control_center_status` 字段）→ 执行本地环境探测。
+
+同时从 frontmatter 提取 `gateways:` 列表（可选，不影响缓存命中判定）。
 
 **路由决策表（根据参数 + 缓存）：**
 
 | 参数 | 缓存状态 | 执行路径 |
 |------|---------|---------|
-| 无参数，无 gateways | 任意 | → 本地环境探测，输出 L0（仅 control-center） |
+| 无参数，无 gateways | 任意 | → 本地环境探测（仅缓存未命中时），输出 L0（仅 control-center） |
 | 无参数，有 gateways | 任意 | → 并行查所有 gateways → L0 Fleet 视图 |
 | `<name>` | 任意 | → 查指定 gateway → L1 Gateway 视图 |
 | `<name> agents\|channels\|plugins\|nodes` | 任意 | → 查指定 gateway 指定资源 → L2 资源视图 |
 | `ALL` | 任意 | → 并行查所有可达 → L0 Fleet 视图 |
 
-缓存命中 `control_center_status` 时，**跳过**本地 bash 环境探测，直接使用缓存值渲染 control-center 行。
-
 ---
 
-## 本地环境探测（无缓存时执行）
+## 本地环境探测（仅缓存未命中时执行）
 
 ```bash
 echo "===ENV===" && hostname && whoami && \
@@ -87,12 +90,16 @@ openclaw status --deep --all 2>&1
 
 SSH 命令模板（远程 gateway）：
 
+构造 ssh 命令时，**必须将每个 `-o` 选项作为独立参数**，不要拼接到一个字符串变量中。直接写完整命令：
+
 ```bash
-SSH_OPTS="-o ConnectTimeout=5 -o BatchMode=yes -o ControlMaster=auto \
-  -o ControlPath=/tmp/oc-ssh-%r@%h:%p -o ControlPersist=60"
-SSH_OPTS="$SSH_OPTS ${ssh_key:+-i $ssh_key} -p ${ssh_port:-22}"
-ssh $SSH_OPTS ${ssh_user}@${host} "<命令>"
+ssh -o ConnectTimeout=5 -o BatchMode=yes \
+    -o ControlMaster=auto -o ControlPath=/tmp/oc-ssh-%r@%h:%p -o ControlPersist=60 \
+    -i <ssh_key> -p <ssh_port|22> \
+    <ssh_user>@<host> "<命令>"
 ```
+
+其中 `-i <ssh_key>` 仅在 gateway 配置了 `ssh_key` 时添加；`-p` 默认 22。
 
 **Step 3: 汇总输出**
 
@@ -537,13 +544,18 @@ Fleet Status   2026-03-05 14:35
 
 ## 远程 Gateway SSH 配置
 
-所有远程查询使用统一 SSH 选项（复用连接，减少握手）：
+所有远程查询使用统一 SSH 选项（复用连接，减少握手）。
+
+**重要：构造 ssh 命令时，必须将每个 `-o` 选项作为独立参数直接写在命令行中，禁止先拼接到字符串变量再展开。**
+
+完整命令模板：
 
 ```bash
-SSH_OPTS="-o IdentitiesOnly=yes -o ConnectTimeout=10"
-SSH_OPTS="$SSH_OPTS -o ServerAliveInterval=15 -o ServerAliveCountMax=2"
-SSH_OPTS="$SSH_OPTS -o ControlMaster=auto"
-SSH_OPTS="$SSH_OPTS -o ControlPath=/tmp/oc-ssh-%r@%h:%p"
-SSH_OPTS="$SSH_OPTS -o ControlPersist=300"
-SSH_OPTS="$SSH_OPTS ${ssh_key:+-i $ssh_key} -p ${ssh_port:-22}"
+ssh -o IdentitiesOnly=yes -o ConnectTimeout=10 \
+    -o ServerAliveInterval=15 -o ServerAliveCountMax=2 \
+    -o ControlMaster=auto -o ControlPath=/tmp/oc-ssh-%r@%h:%p -o ControlPersist=300 \
+    -i <ssh_key> -p <ssh_port|22> \
+    <ssh_user>@<host> "<命令>"
 ```
+
+其中 `-i <ssh_key>` 仅在 gateway 配置了 `ssh_key` 时添加；`-p` 默认 22。

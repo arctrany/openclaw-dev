@@ -39,14 +39,19 @@ ssh -o ConnectTimeout=5 -o BatchMode=yes \
 
 读取 `openclaw-node-operations` skill 的 `references/diagnose-runbook.md`，按步骤执行完整诊断流程。
 
-对远程 gateway，将 runbook 中的 `$HOST` 参数设为 `ssh_user@host`，使用 SSH 连接参数:
+对远程 gateway，将 runbook 中的 `$HOST` 参数设为 `ssh_user@host`，使用 SSH 连接参数。
+
+**重要：构造 ssh 命令时，必须将每个 `-o` 选项作为独立参数直接写在命令行中，禁止先拼接到字符串变量再展开。**
+
 ```bash
-SSH_OPTS="-o IdentitiesOnly=yes -o ConnectTimeout=10 -o ServerAliveInterval=15 -o ServerAliveCountMax=2"
-SSH_OPTS="$SSH_OPTS -o ControlMaster=auto -o ControlPath=/tmp/openclaw-ssh-%r@%h:%p -o ControlPersist=300"
-SSH_OPTS="$SSH_OPTS ${ssh_key:+-i $ssh_key} -p ${ssh_port:-22}"
-HOST="${ssh_user}@${host}"
-CMD="ssh $SSH_OPTS $HOST"
+ssh -o IdentitiesOnly=yes -o ConnectTimeout=10 \
+    -o ServerAliveInterval=15 -o ServerAliveCountMax=2 \
+    -o ControlMaster=auto -o ControlPath=/tmp/openclaw-ssh-%r@%h:%p -o ControlPersist=300 \
+    -i <ssh_key> -p <ssh_port|22> \
+    <ssh_user>@<host> "<命令>"
 ```
+
+其中 `-i <ssh_key>` 仅在 gateway 配置了 `ssh_key` 时添加；`-p` 默认 22。
 
 对本地 gateway，`CMD=""` (直接执行，和现有行为一致)。
 
@@ -59,9 +64,12 @@ CMD="ssh $SSH_OPTS $HOST"
 ```bash
 for gw_name in "${GATEWAYS[@]}"; do
   (
-    # 根据 gateway 配置构造 CMD
-    # 执行 openclaw doctor + health + 基础日志分析
-    ssh $SSH_OPTS ${ssh_user}@${host} \
+    # 根据 gateway 配置构造完整 ssh 命令（每个 -o 独立参数）
+    ssh -o IdentitiesOnly=yes -o ConnectTimeout=10 \
+        -o ServerAliveInterval=15 -o ServerAliveCountMax=2 \
+        -o ControlMaster=auto -o ControlPath=/tmp/openclaw-ssh-%r@%h:%p -o ControlPersist=300 \
+        -i <ssh_key> -p <ssh_port|22> \
+        <ssh_user>@<host> \
       "openclaw doctor 2>&1; openclaw health 2>&1; openclaw status --deep 2>&1"
   ) > "/tmp/openclaw-diag-$gw_name" 2>&1 &
 done

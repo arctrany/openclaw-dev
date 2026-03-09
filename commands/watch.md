@@ -129,16 +129,21 @@ bash scripts/fleet-ssh-setup.sh "${ssh_user}@${host}" "${ssh_port}" "${ssh_key}"
 
 ### 4. 统一 SSH 选项
 
-所有 SSH 命令使用统一选项模板（与 `/status` 共用）：
+所有 SSH 命令使用统一选项模板（与 `/status` 共用）。
+
+**重要：构造 ssh 命令时，必须将每个 `-o` 选项作为独立参数直接写在命令行中，禁止先拼接到字符串变量再展开。**
+
+完整命令模板：
 
 ```bash
-SSH_OPTS="-o IdentitiesOnly=yes -o ConnectTimeout=10"
-SSH_OPTS="$SSH_OPTS -o ServerAliveInterval=15 -o ServerAliveCountMax=2"
-SSH_OPTS="$SSH_OPTS -o ControlMaster=auto"
-SSH_OPTS="$SSH_OPTS -o ControlPath=/tmp/oc-ssh-%r@%h:%p"
-SSH_OPTS="$SSH_OPTS -o ControlPersist=300"
-SSH_OPTS="$SSH_OPTS ${ssh_key:+-i $ssh_key} -p ${ssh_port:-22}"
+ssh -o IdentitiesOnly=yes -o ConnectTimeout=10 \
+    -o ServerAliveInterval=15 -o ServerAliveCountMax=2 \
+    -o ControlMaster=auto -o ControlPath=/tmp/oc-ssh-%r@%h:%p -o ControlPersist=300 \
+    -i <ssh_key> -p <ssh_port|22> \
+    <ssh_user>@<host> "<命令>"
 ```
+
+其中 `-i <ssh_key>` 仅在 gateway 配置了 `ssh_key` 时添加；`-p` 默认 22。
 
 ### 5. 创建监控面板
 
@@ -180,11 +185,14 @@ SESSION="openclaw-fleet"
 LOG="/tmp/fleet-${SESSION}-${NODE_NAME}.log"
 
 echo "━━━ $(date '+%H:%M:%S') openclaw health ━━━" >> "$LOG"
-ssh $SSH_OPTS "${ssh_user}@${host}" "openclaw health" >> "$LOG" 2>&1 || \
+# 使用上述 SSH 命令模板，每个 -o 独立参数
+ssh -o ConnectTimeout=10 -o ControlMaster=auto -o ControlPath=/tmp/oc-ssh-%r@%h:%p -o ControlPersist=300 \
+    -p <ssh_port|22> <ssh_user>@<host> "openclaw health" >> "$LOG" 2>&1 || \
   echo "[ERROR] $(date '+%H:%M:%S') SSH failed for ${NODE_NAME}" >> "$LOG"
 
 echo "━━━ $(date '+%H:%M:%S') openclaw status --deep ━━━" >> "$LOG"
-ssh $SSH_OPTS "${ssh_user}@${host}" "openclaw status --deep" >> "$LOG" 2>&1 || \
+ssh -o ConnectTimeout=10 -o ControlMaster=auto -o ControlPath=/tmp/oc-ssh-%r@%h:%p -o ControlPersist=300 \
+    -p <ssh_port|22> <ssh_user>@<host> "openclaw status --deep" >> "$LOG" 2>&1 || \
   echo "[ERROR] $(date '+%H:%M:%S') SSH failed for ${NODE_NAME}" >> "$LOG"
 ```
 
@@ -198,7 +206,8 @@ while tmux has-session -t openclaw-fleet 2>/dev/null; do
     sleep 60
     echo "" >> "$LOG"
     echo "━━━ $(date '+%H:%M:%S') [heartbeat] openclaw health ━━━" >> "$LOG"
-    ssh $SSH_OPTS "${ssh_user}@${host}" "openclaw health" >> "$LOG" 2>&1 || \
+    ssh -o ConnectTimeout=10 -o ControlMaster=auto -o ControlPath=/tmp/oc-ssh-%r@%h:%p -o ControlPersist=300 \
+        -p <ssh_port|22> <ssh_user>@<host> "openclaw health" >> "$LOG" 2>&1 || \
       echo "[ERROR] $(date '+%H:%M:%S') Node unreachable" >> "$LOG"
 done &
 ```
@@ -211,7 +220,8 @@ Watch loop 生命周期与 tmux session 绑定：session 销毁时，loop 条件
 
 ```bash
 echo "━━━ $(date '+%H:%M:%S') <用户请求的命令> ━━━" >> "$LOG"
-ssh $SSH_OPTS "${ssh_user}@${host}" "<command>" >> "$LOG" 2>&1
+ssh -o ConnectTimeout=10 -o ControlMaster=auto -o ControlPath=/tmp/oc-ssh-%r@%h:%p -o ControlPersist=300 \
+    -p <ssh_port|22> <ssh_user>@<host> "<command>" >> "$LOG" 2>&1
 ```
 
 ---
@@ -232,7 +242,8 @@ tmux has-session -t openclaw-fleet 2>/dev/null
 
 ```bash
 # 双写模板
-OUTPUT=$(ssh $SSH_OPTS "${ssh_user}@${host}" "openclaw health" 2>&1)
+OUTPUT=$(ssh -o ConnectTimeout=10 -o ControlMaster=auto -o ControlPath=/tmp/oc-ssh-%r@%h:%p -o ControlPersist=300 \
+    -p <ssh_port|22> <ssh_user>@<host> "openclaw health" 2>&1)
 echo "$OUTPUT"  # 对话输出
 
 # 若 fleet session 活跃，同步到面板
