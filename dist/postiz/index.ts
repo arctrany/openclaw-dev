@@ -94,9 +94,9 @@ export default function register(api: any) {
             type: "object",
             properties: {},
         },
-        handler: async () => {
+        async execute(_toolCallId: string) {
             const data = await postizFetch(api, "/integrations");
-            return { content: JSON.stringify(data, null, 2) };
+            return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
         },
     });
 
@@ -115,12 +115,12 @@ export default function register(api: any) {
             },
             required: ["integration_id"],
         },
-        handler: async ({ integration_id }: { integration_id: string }) => {
+        async execute(_toolCallId: string, { integration_id }: { integration_id: string }) {
             const data = await postizFetch(
                 api,
                 `/integration-settings/${integration_id}`
             );
-            return { content: JSON.stringify(data, null, 2) };
+            return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
         },
     });
 
@@ -162,7 +162,7 @@ export default function register(api: any) {
             },
             required: ["content", "date", "integrations"],
         },
-        handler: async ({
+        async execute(_toolCallId: string, {
             content,
             date,
             integrations,
@@ -176,7 +176,7 @@ export default function register(api: any) {
             media?: string[];
             type?: string;
             settings?: object;
-        }) => {
+        }) {
             const body: any = {
                 posts: [{ content, image: media || [] }],
                 date,
@@ -190,7 +190,7 @@ export default function register(api: any) {
                 method: "POST",
                 body: JSON.stringify(body),
             });
-            return { content: JSON.stringify(data, null, 2) };
+            return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
         },
     });
 
@@ -212,13 +212,13 @@ export default function register(api: any) {
                 },
             },
         },
-        handler: async ({
+        async execute(_toolCallId: string, {
             start_date,
             end_date,
         }: {
             start_date?: string;
             end_date?: string;
-        }) => {
+        }) {
             let path = "/posts";
             const params: string[] = [];
             if (start_date) params.push(`startDate=${encodeURIComponent(start_date)}`);
@@ -226,7 +226,7 @@ export default function register(api: any) {
             if (params.length) path += `?${params.join("&")}`;
 
             const data = await postizFetch(api, path);
-            return { content: JSON.stringify(data, null, 2) };
+            return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
         },
     });
 
@@ -244,11 +244,11 @@ export default function register(api: any) {
             },
             required: ["post_id"],
         },
-        handler: async ({ post_id }: { post_id: string }) => {
+        async execute(_toolCallId: string, { post_id }: { post_id: string }) {
             const data = await postizFetch(api, `/posts/${post_id}`, {
                 method: "DELETE",
             });
-            return { content: JSON.stringify(data, null, 2) };
+            return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
         },
     });
 
@@ -267,7 +267,7 @@ export default function register(api: any) {
             },
             required: ["file_path"],
         },
-        handler: async ({ file_path }: { file_path: string }) => {
+        async execute(_toolCallId: string, { file_path }: { file_path: string }) {
             const fs = await import("fs");
             const path = await import("path");
 
@@ -332,7 +332,7 @@ export default function register(api: any) {
             }
 
             const data = await res.json();
-            return { content: JSON.stringify(data, null, 2) };
+            return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
         },
     });
 
@@ -355,19 +355,19 @@ export default function register(api: any) {
             },
             required: ["integration_id"],
         },
-        handler: async ({
+        async execute(_toolCallId: string, {
             integration_id,
             days,
         }: {
             integration_id: string;
             days?: number;
-        }) => {
+        }) {
             const d = days || 7;
             const data = await postizFetch(
                 api,
                 `/analytics/${integration_id}?days=${d}`
             );
-            return { content: JSON.stringify(data, null, 2) };
+            return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
         },
     });
 
@@ -390,13 +390,13 @@ export default function register(api: any) {
             },
             required: ["post_id"],
         },
-        handler: async ({ post_id, days }: { post_id: string; days?: number }) => {
+        async execute(_toolCallId: string, { post_id, days }: { post_id: string; days?: number }) {
             const d = days || 7;
             const data = await postizFetch(
                 api,
                 `/analytics/post/${post_id}?days=${d}`
             );
-            return { content: JSON.stringify(data, null, 2) };
+            return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
         },
     });
 
@@ -423,7 +423,7 @@ export default function register(api: any) {
             },
             required: ["integration_id", "method"],
         },
-        handler: async ({
+        async execute(_toolCallId: string, {
             integration_id,
             method,
             data,
@@ -431,8 +431,7 @@ export default function register(api: any) {
             integration_id: string;
             method: string;
             data?: object;
-        }) => {
-            // NOTE: body 已通过 postizFetch body 参数传递，此处无需单独序列化
+        }) {
             const result = await postizFetch(
                 api,
                 `/integration-trigger/${integration_id}`,
@@ -441,7 +440,7 @@ export default function register(api: any) {
                     body: JSON.stringify({ method, data: data || {} }),
                 }
             );
-            return { content: JSON.stringify(result, null, 2) };
+            return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
         },
     });
 

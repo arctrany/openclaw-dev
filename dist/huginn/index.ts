@@ -257,7 +257,7 @@ export default function register(api: any) {
             type: "object",
             properties: {},
         },
-        handler: async () => {
+        async execute(_toolCallId: string) {
             const agents = await huginnFetch(api, "/agents.json");
             const summary = (Array.isArray(agents) ? agents : agents.agents || []).map((a: any) => ({
                 id: a.id,
@@ -269,7 +269,7 @@ export default function register(api: any) {
                 working: a.working,
                 disabled: a.disabled,
             }));
-            return { content: JSON.stringify(summary, null, 2) };
+            return { content: [{ type: "text" as const, text: JSON.stringify(summary, null, 2) }] };
         },
     });
 
@@ -288,9 +288,9 @@ export default function register(api: any) {
             },
             required: ["agent_id"],
         },
-        handler: async ({ agent_id }: { agent_id: number }) => {
+        async execute(_toolCallId: string, { agent_id }: { agent_id: number }) {
             const agent = await huginnFetch(api, `/agents/${agent_id}.json`);
-            return { content: JSON.stringify(agent, null, 2) };
+            return { content: [{ type: "text" as const, text: JSON.stringify(agent, null, 2) }] };
         },
     });
 
@@ -309,16 +309,16 @@ export default function register(api: any) {
             },
             required: ["agent_id"],
         },
-        handler: async ({ agent_id }: { agent_id: number }) => {
+        async execute(_toolCallId: string, { agent_id }: { agent_id: number }) {
             const result = await huginnFetch(api, `/agents/${agent_id}/run`, {
                 method: "POST",
             });
             return {
-                content: JSON.stringify(
+                content: [{ type: "text" as const, text: JSON.stringify(
                     { success: true, agent_id, message: "Agent run triggered", detail: result },
                     null,
                     2
-                ),
+                ) }],
             };
         },
     });
@@ -342,10 +342,10 @@ export default function register(api: any) {
             },
             required: ["agent_id"],
         },
-        handler: async ({ agent_id, page }: { agent_id: number; page?: number }) => {
+        async execute(_toolCallId: string, { agent_id, page }: { agent_id: number; page?: number }) {
             const p = page || 1;
             const events = await huginnFetch(api, `/agents/${agent_id}/events.json?page=${p}`);
-            return { content: JSON.stringify(events, null, 2) };
+            return { content: [{ type: "text" as const, text: JSON.stringify(events, null, 2) }] };
         },
     });
 
@@ -368,10 +368,10 @@ export default function register(api: any) {
             },
             required: ["agent_id"],
         },
-        handler: async ({ agent_id, page }: { agent_id: number; page?: number }) => {
+        async execute(_toolCallId: string, { agent_id, page }: { agent_id: number; page?: number }) {
             const p = page || 1;
             const logs = await huginnFetch(api, `/agents/${agent_id}/logs.json?page=${p}`);
-            return { content: JSON.stringify(logs, null, 2) };
+            return { content: [{ type: "text" as const, text: JSON.stringify(logs, null, 2) }] };
         },
     });
 
@@ -394,12 +394,12 @@ export default function register(api: any) {
             },
             required: ["agent_id", "payload"],
         },
-        handler: async ({ agent_id, payload }: { agent_id: number; payload: object }) => {
+        async execute(_toolCallId: string, { agent_id, payload }: { agent_id: number; payload: object }) {
             const result = await huginnFetch(api, `/agents/${agent_id}/events.json`, {
                 method: "POST",
                 body: JSON.stringify({ event: { payload } }),
             });
-            return { content: JSON.stringify(result, null, 2) };
+            return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
         },
     });
 
@@ -435,7 +435,7 @@ export default function register(api: any) {
             },
             required: ["agent_id"],
         },
-        handler: async ({
+        async execute(_toolCallId: string, {
             agent_id,
             options,
             schedule,
@@ -447,7 +447,7 @@ export default function register(api: any) {
             schedule?: string;
             source_ids?: number[];
             disabled?: boolean;
-        }) => {
+        }) {
             const body: any = { agent: {} };
             if (options !== undefined) body.agent.options = options;
             if (schedule !== undefined) body.agent.schedule = schedule;
@@ -458,7 +458,7 @@ export default function register(api: any) {
                 method: "PUT",
                 body: JSON.stringify(body),
             });
-            return { content: JSON.stringify(result, null, 2) };
+            return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
         },
     });
 
@@ -471,7 +471,7 @@ export default function register(api: any) {
             type: "object",
             properties: {},
         },
-        handler: async () => {
+        async execute(_toolCallId: string) {
             const agents = await huginnFetch(api, "/agents.json");
             const list: any[] = Array.isArray(agents) ? agents : agents.agents || [];
 
@@ -491,7 +491,7 @@ export default function register(api: any) {
             const errored = pipeline.filter((a) => !a.working && !a.disabled).length;
 
             return {
-                content: JSON.stringify(
+                content: [{ type: "text" as const, text: JSON.stringify(
                     {
                         summary: {
                             total: pipeline.length,
@@ -503,7 +503,7 @@ export default function register(api: any) {
                     },
                     null,
                     2
-                ),
+                ) }],
             };
         },
     });
