@@ -1,15 +1,8 @@
 {
-    "name": "@openclaw-dist/huginn",
+    "name": "huginn",
     "version": "1.0.0",
-    "description": "OpenClaw Plugin for Huginn Automation Platform",
     "type": "module",
     "openclaw": {
-        "extensions": [
-            "."
-        ]
-    },
-    "devDependencies": {
-        "@types/node": "^20.0.0",
-        "typescript": "^5.0.0"
+        "extensions": ["./index.ts"]
     }
 }

@@ -1,35 +1,18 @@
 {
     "id": "postiz",
     "name": "Postiz Social Media",
-    "version": "1.0.0",
     "description": "Postiz 社媒管理集成 — 支持 28+ 平台的定时发布、内容管理和数据分析",
-    "author": {
-        "name": "OpenClaw Examples"
-    },
-    "entry": "./src/index.ts",
     "configSchema": {
         "type": "object",
         "properties": {
             "apiUrl": {
                 "type": "string",
-                "description": "Postiz API URL, e.g. http://your-host:4007/api"
+                "description": "Postiz API URL (env: POSTIZ_API_URL)"
             },
             "apiKey": {
-                "type": "string"
+                "type": "string",
+                "description": "Postiz API Key (env: POSTIZ_API_KEY)"
             }
-        },
-        "required": [
-            "apiKey"
-        ]
-    },
-    "uiHints": {
-        "apiUrl": {
-            "label": "Postiz API URL",
-            "placeholder": "http://your-postiz-host:4007/api"
-        },
-        "apiKey": {
-            "label": "Postiz API Key",
-            "sensitive": true
         }
     }
 }
