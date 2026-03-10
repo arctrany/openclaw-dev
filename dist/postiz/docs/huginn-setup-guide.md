@@ -61,7 +61,7 @@ bash deploy-remote.sh
 
 ```json
 {
-  "post_url": "http://100.92.217.43:18789/hooks/agent",
+  "post_url": "http://<GATEWAY_HOST>:<GATEWAY_PORT>/hooks/agent",
   "content_type": "json",
   "method": "post",
   "payload": {
@@ -73,7 +73,7 @@ bash deploy-remote.sh
     "thinking": "high"
   },
   "headers": {
-    "Authorization": "Bearer b8aa499c9ba2164e6f4dc6b63581b2b0701759317894dab8"
+    "Authorization": "Bearer <OPENCLAW_HOOKS_TOKEN>"
   },
   "emit_events": "false",
   "no_merge": "false",
@@ -91,7 +91,7 @@ Huginn (WebsiteAgent → TriggerAgent → PostAgent)
     │  HTTP POST /hooks/agent
     │  Authorization: Bearer <OPENCLAW_HOOKS_TOKEN>
     ▼
-OpenClaw Gateway (100.92.217.43:18789)
+OpenClaw Gateway (<GATEWAY_HOST>:<GATEWAY_PORT>)
     │
     │  唤醒 researcher 工作区
     ▼

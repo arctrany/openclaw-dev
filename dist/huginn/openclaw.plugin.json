@@ -1,0 +1,42 @@
+{
+    "id": "huginn",
+    "name": "Huginn Automation",
+    "version": "1.0.0",
+    "description": "Huginn 自动化平台集成 — 管理 agents、events、日志，触发流水线运行",
+    "author": {
+        "name": "OpenClaw Dist"
+    },
+    "entry": "./src/index.ts",
+    "configSchema": {
+        "type": "object",
+        "properties": {
+            "huginnUrl": {
+                "type": "string",
+                "description": "Huginn instance URL, e.g. http://192.168.1.78:3000"
+            },
+            "username": {
+                "type": "string",
+                "description": "Huginn login username"
+            },
+            "password": {
+                "type": "string",
+                "description": "Huginn login password (prefer env HUGINN_PASSWORD)"
+            }
+        },
+        "required": ["huginnUrl"]
+    },
+    "uiHints": {
+        "huginnUrl": {
+            "label": "Huginn URL",
+            "placeholder": "http://192.168.1.78:3000"
+        },
+        "username": {
+            "label": "Username",
+            "placeholder": "admin"
+        },
+        "password": {
+            "label": "Password",
+            "sensitive": true
+        }
+    }
+}

@@ -7,7 +7,7 @@
 #   source .env.deploy && bash deploy-remote.sh
 #
 # 或直接指定变量:
-#   REMOTE_HOST=100.92.217.43 REMOTE_USER=haowu bash deploy-remote.sh
+#   REMOTE_HOST=<your-ip> REMOTE_USER=<your-user> bash deploy-remote.sh
 
 set -euo pipefail
 
@@ -15,11 +15,11 @@ set -euo pipefail
 # 配置来源: 读取环境变量，或使用合理的默认值
 # ────────────────────────────────────────────────────────
 REMOTE_USER="${REMOTE_USER:-haowu}"
-REMOTE_HOST="${REMOTE_HOST:?必须设置 REMOTE_HOST 环境变量 (如: export REMOTE_HOST=100.92.217.43)}"
+REMOTE_HOST="${REMOTE_HOST:?必须设置 REMOTE_HOST 环境变量 (如: export REMOTE_HOST=<your-tailscale-ip>)}"
 LOCAL_PLUGIN_DIR="$(cd "$(dirname "$0")/../plugin" && pwd)"
 REMOTE_PLUGIN_DIR="~/.openclaw/extensions/postiz"
 
-SSH_OPTS="-o ConnectTimeout=10 -o StrictHostKeyChecking=no"
+SSH_OPTS="-o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new"
 
 echo "=== Deploying Postiz Plugin to Remote OpenClaw ==="
 echo "  Remote: ${REMOTE_USER}@${REMOTE_HOST}"

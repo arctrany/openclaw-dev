@@ -73,9 +73,12 @@ async function postizFetch(
 
     if (!res.ok) {
         const text = await res.text();
-        // 截断响应体，防止服务端 echo 敏感字段导致泄漏
+        // [SEC] Truncate and scrub sensitive patterns from error response
         const truncated = text.length > 300 ? text.slice(0, 300) + "…" : text;
-        throw new Error(`Postiz API error ${res.status}: ${truncated}`);
+        const sanitized = truncated
+            .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "[EMAIL_REDACTED]")
+            .replace(/(?:api[_-]?key|token|secret|password|credential)['":\s]*['"]?[a-zA-Z0-9_-]{8,}['"]?/gi, "[CREDENTIAL_REDACTED]");
+        throw new Error(`Postiz API error ${res.status}: ${sanitized}`);
     }
 
     return res.json();
@@ -268,16 +271,38 @@ export default function register(api: any) {
             const fs = await import("fs");
             const path = await import("path");
 
-            // 路径遍历防护：将路径规范化后检查是否为绝对路径，
-            // 并拒绝包含 ../  或指向敏感目录的请求
+            // [SEC] Path traversal defense: allowlist + sensitive pattern blocking
             const resolved = path.resolve(file_path);
-            const BLOCKED = ["/etc", "/var", "/root", "/proc", "/sys"];
-            if (BLOCKED.some((dir) => resolved.startsWith(dir))) {
-                throw new Error(`拒绝访问受限路径: ${resolved}`);
+
+            // Allowlist: only allow uploading from home directory subtree or /tmp
+            const homeDir = process.env.HOME || process.env.USERPROFILE || "/";
+            const ALLOWED_ROOTS = [
+                path.resolve(homeDir),
+                "/tmp",
+            ];
+            const inAllowedRoot = ALLOWED_ROOTS.some(
+                (root) => resolved.startsWith(root + path.sep) || resolved === root
+            );
+            if (!inAllowedRoot) {
+                throw new Error("拒绝上传: 文件路径不在允许范围内");
             }
-            // 路径必须是绝对路径
-            if (!path.isAbsolute(resolved)) {
-                throw new Error("file_path 必须是绝对路径");
+
+            // Block sensitive subdirectories even within home
+            const SENSITIVE_PATTERNS = [
+                "/.ssh/", "/.gnupg/", "/.aws/", "/.kube/", "/.config/gcloud/",
+                "/.docker/", "/.npmrc", "/.netrc", "/.env", "/credentials",
+                "/.openclaw/openclaw.env", "/id_rsa", "/id_ed25519",
+                "/.bash_history", "/.zsh_history",
+            ];
+            const normalizedPath = resolved.replace(/\\/g, "/");
+            if (SENSITIVE_PATTERNS.some((p) => normalizedPath.includes(p))) {
+                throw new Error("拒绝上传: 路径包含敏感文件或目录");
+            }
+
+            // Block hidden config files at home root (e.g. ~/.bashrc, ~/.zshrc)
+            const relToHome = path.relative(path.resolve(homeDir), resolved);
+            if (relToHome.startsWith(".") && !relToHome.includes(path.sep)) {
+                throw new Error("拒绝上传: 不允许上传 home 目录下的隐藏配置文件");
             }
 
             if (!fs.existsSync(resolved)) {
@@ -301,7 +326,9 @@ export default function register(api: any) {
             });
 
             if (!res.ok) {
-                throw new Error(`Upload failed: ${res.status} ${await res.text()}`);
+                const errText = await res.text();
+                const truncErr = errText.length > 300 ? errText.slice(0, 300) + "…" : errText;
+                throw new Error(`Upload failed: ${res.status} ${truncErr}`);
             }
 
             const data = await res.json();
