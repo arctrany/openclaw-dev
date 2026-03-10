@@ -73,6 +73,7 @@ OpenClaw 全面知识库 — 功能/架构/开发/部署/运维 + plugin API + a
 |------|---------|
 | **创建新 Agent** (交互式 scaffold) | `references/scaffold-agent-guide.md` |
 | **创建新 Plugin** (交互式 scaffold) | `references/scaffold-plugin-guide.md` |
+| **Plugin 运维管理** (安装/卸载/升级/诊断) | `references/plugin-management.md` |
 | **同步知识库** (与上游文档对齐) | `references/sync-knowledge-runbook.md` |
 
 ## 核心架构

@@ -118,7 +118,7 @@ Optional tags for future grouping support (e.g., `[cloud, production]`).
 ## Usage
 
 This configuration is read by openclaw-dev commands:
-- `/scaffold-plugin` - Uses plugin_defaults for author info
+- `/plugin` - Uses plugin_defaults for author info, gateways for remote operations
 - `/create-skill` - Uses openclaw.workspace_path and default_agent
 - `/deploy-skill` - Uses deployment paths
 - `/validate-plugin` - Uses testing.auto_validate setting

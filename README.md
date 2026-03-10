@@ -119,7 +119,7 @@ Gateway、Agents、Channels、Plugins 的统一状态视图。支持多 Gateway 
 | `/validate-skill` | 验证 skill |
 | `/list-skills` | 列出所有 skill |
 | `/scaffold-agent` | 脚手架 agent |
-| `/scaffold-plugin` | 脚手架 plugin |
+| `/plugin` | Plugin 全生命周期管理（创建/安装/卸载/升级/启用/禁用/诊断） |
 | `/watch` | Fleet 实时监控面板 |
 
 ## 跨 OS 支持

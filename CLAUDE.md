@@ -72,7 +72,7 @@ Knowledgebase = theory. Node-operations = hands-on. No overlap.
 
 **User commands** (loaded by default):
 
-`/diagnose` `/qa-agent` `/setup-node` `/lint-config` `/status` `/evolve-skill` `/create-skill` `/deploy-skill` `/validate-skill` `/list-skills` `/scaffold-agent` `/scaffold-plugin` `/watch`
+`/diagnose` `/qa-agent` `/setup-node` `/lint-config` `/status` `/evolve-skill` `/create-skill` `/deploy-skill` `/validate-skill` `/list-skills` `/scaffold-agent` `/plugin` `/watch`
 
 **Maintainer commands** (loaded when `role: maintainer` in `openclaw-dev.local.md`):
 

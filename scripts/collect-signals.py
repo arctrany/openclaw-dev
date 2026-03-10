@@ -21,7 +21,7 @@ COMMAND_NAMES = [
     "/diagnose", "/diagnose-openclaw", "/setup-node", "/lint-config",
     "/openclaw-status", "/evolve-skill", "/evolve-openclaw-capability",
     "/create-skill", "/deploy-skill", "/validate-skill", "/list-skills",
-    "/scaffold-agent", "/scaffold-plugin", "/sync-knowledge",
+    "/scaffold-agent", "/plugin", "/sync-knowledge",
     "/collect-signals", "/evolve-openclaw-dev",
 ]
 
