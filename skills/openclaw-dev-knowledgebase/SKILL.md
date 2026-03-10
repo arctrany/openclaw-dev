@@ -129,26 +129,29 @@ openclaw gateway start | stop | restart
 ## Plugin 开发快速入门
 
 ```bash
-# 1. 创建目录 + manifest
+# 1. 创建目录 + manifest + package.json
 mkdir my-plugin && cd my-plugin
 cat > openclaw.plugin.json << 'EOF'
-{"name":"my-plugin","version":"0.1.0","entry":"./src/index.ts"}
+{"id": "my-plugin", "name": "My Plugin", "description": "What it does"}
+EOF
+cat > package.json << 'EOF'
+{"name": "my-plugin", "version": "1.0.0", "type": "module", "openclaw": {"extensions": ["./index.ts"]}}
 EOF
 
-# 2. TypeScript entry
-mkdir src && cat > src/index.ts << 'EOF'
-export default function activate(api) {
-  api.registerTool("my-tool", {
+# 2. TypeScript entry (必须在根目录，不能放 src/)
+cat > index.ts << 'EOF'
+export default function(api) {
+  api.registerTool({
+    name: "my_tool",
     description: "My tool",
-    parameters: { input: { type: "string" } },
-    async execute({ input }) { return { result: input }; },
+    parameters: { type: "object", properties: { input: { type: "string" } } },
+    handler: async ({ input }) => ({ content: input }),
   });
 }
 EOF
 
-# 3. 安装
-ln -s $(pwd) ~/.openclaw/extensions/my-plugin
-pkill -TERM openclaw-gateway
+# 3. 链接安装 (开发模式)
+openclaw plugins install -l .
 ```
 
 ## Agent 配置快速入门

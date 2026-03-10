@@ -87,6 +87,38 @@ export default function(api) {
 | 显示但有 error | 加载异常 | `openclaw plugins doctor`，查看 Gateway 日志 |
 | ID 冲突 | 多个同 ID plugin | 更高优先级路径取胜，检查发现顺序 |
 
+### 安装常见错误
+
+| 错误信息 | 原因 | 修复 |
+|---------|------|------|
+| `extension entry escapes package directory` | `openclaw.extensions` 指向目录 `["."]` 或 entry 在 `src/` 子目录 | 改为 `["./index.ts"]`，入口文件移到根目录 |
+| `plugin id mismatch` | `package.json` 的 `name` 与 `openclaw.plugin.json` 的 `id` 不一致 | 确保两者完全一致 |
+| `package.json missing openclaw.extensions` | 缺少 `openclaw` 字段 | 添加 `"openclaw": {"extensions": ["./index.ts"]}` |
+| `extracted package missing package.json` | 目录下没有 `package.json` | 创建包含 `name` + `openclaw.extensions` 的 package.json |
+| `plugin manifest requires configSchema` | manifest 缺少 `configSchema` | 添加 `"configSchema": {"type": "object", "properties": {}}` |
+| `must have required property 'xxx'` | `configSchema` 含 `required` 数组，但安装时 config 还未注入 | 移除 `configSchema.required`，config 通过 env vars 或 `openclaw.json` 后注入 |
+| `plugin already exists` | 已有同 ID 的 plugin | 先 `rm -rf ~/.openclaw/extensions/<id>` 再重新安装 |
+| `loaded without install/load-path provenance` | 警告（非阻塞），plugin 不在 `plugins.allow` 白名单中 | 将 plugin id 加入 `plugins.allow` 数组 |
+
+### 安装工作流（验证过的正确流程）
+
+```bash
+# ❌ 错误方式: 直接 scp/cp 到 extensions/ — 不会注册，只是文件复制
+scp -r plugin/ remote:~/.openclaw/extensions/my-plugin  # 不起作用!
+
+# ✅ 正确方式: 使用 openclaw CLI 安装
+openclaw plugins install -l /path/to/my-plugin           # 链接安装 (开发)
+openclaw plugins install /path/to/my-plugin              # 复制安装 (生产)
+
+# 安装后注入 config (如果 plugin 需要 API 配置)
+# 方法 1: 手动编辑 openclaw.json
+jq '.plugins.entries["my-plugin"].config = {"apiUrl": "..."}' \
+  ~/.openclaw/openclaw.json > /tmp/oc.json && mv /tmp/oc.json ~/.openclaw/openclaw.json
+
+# 方法 2: 通过环境变量 (在 openclaw.env 中设置)
+echo 'MY_API_KEY=xxx' >> ~/.openclaw/openclaw.env
+```
+
 ### Entry Point 问题
 
 ```bash
