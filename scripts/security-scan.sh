@@ -35,6 +35,8 @@ should_skip() {
     */.git/*) return 0 ;;
     # Skip this script itself
     */security-scan.sh) return 0 ;;
+    # Skip git hook scripts (contain scan patterns as whitelists)
+    */hooks/git/*) return 0 ;;
     # Skip binary files
     *.png|*.jpg|*.jpeg|*.gif|*.ico|*.woff|*.woff2|*.ttf|*.eot) return 0 ;;
     # Skip generated platform dirs (should be gitignored, but double-check)
