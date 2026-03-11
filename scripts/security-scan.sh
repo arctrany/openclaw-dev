@@ -178,6 +178,8 @@ SECRET_WHITELIST=(
   'NOT_A_REAL'
   '\$\{[0-9]'                  # bash positional params: ${1:-}, ${4:-}
   '\$\{[A-Z_]+:-'              # bash default values: ${VAR:-default}
+  '\$\{[A-Z_]+}'              # bash env var references: ${VAR}
+  '\$\{[A-Z_]+:\?'             # bash required var: ${VAR:?msg}
 )
 
 is_whitelisted_secret() {

@@ -151,8 +151,6 @@ Gateway、Agents、Channels、Plugins 的统一状态视图。支持多 Gateway 
 ### v2.1.0 (2026-03-04)
 
 **命令重构** — 更清晰的命名：
-- `/openclaw-status` → `/status`
-- `/diagnose-openclaw` + `/evolve-openclaw-capability` 合并为 `/qa-agent`
 
 **Skill 优化**:
 - `openclaw-node-operations`: 状态查询重写为分层执行（环境探测 → 正常/降级模式），弱模型也能快速完成
