@@ -207,3 +207,22 @@ echo "  ── Done: $INSTALLED platforms ──"
 echo ""
 echo "  Update: cd $(basename "$SCRIPT_DIR") && git pull && bash install.sh"
 echo ""
+
+
+# ── Git Hooks ───────────────────────────────────────────────────────────────
+# Install pre-commit and pre-push hooks for local CI checks
+if [[ -d "${REPO_ROOT}/.git" ]]; then
+  echo ""
+  echo "🪝 Installing git hooks..."
+  HOOKS_DIR="${REPO_ROOT}/.git/hooks"
+
+  for hook in pre-commit pre-push; do
+    src="${REPO_ROOT}/hooks/git/${hook}"
+    dst="${HOOKS_DIR}/${hook}"
+    if [[ -f "$src" ]]; then
+      cp "$src" "$dst"
+      chmod +x "$dst"
+      echo "  ✓ ${hook} hook installed"
+    fi
+  done
+fi

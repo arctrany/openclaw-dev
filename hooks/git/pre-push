@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# pre-push hook — Full security scan + skill lint before push.
+# Mirrors the GitHub Actions CI checks exactly.
+# Installed by: bash install.sh
+# Skip with: git push --no-verify
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+FAILED=0
+
+echo -e "${YELLOW}🔍 Pre-push CI checks (mirrors GitHub Actions)...${NC}"
+echo ""
+
+# ── 1. Security & Privacy Scan ──
+echo -e "${YELLOW}━━━ 🔒 Security & Privacy Scan ━━━${NC}"
+if bash "${REPO_ROOT}/scripts/security-scan.sh" --strict; then
+  echo -e "${GREEN}✅ Security scan passed${NC}"
+else
+  echo -e "${RED}❌ Security scan failed${NC}"
+  FAILED=1
+fi
+
+echo ""
+
+# ── 2. SKILL Design Review ──
+echo -e "${YELLOW}━━━ 📐 SKILL Design Review ━━━${NC}"
+if bash "${REPO_ROOT}/scripts/skill-lint.sh"; then
+  echo -e "${GREEN}✅ Skill lint passed${NC}"
+else
+  echo -e "${RED}❌ Skill lint failed${NC}"
+  FAILED=1
+fi
+
+echo ""
+
+if [[ "$FAILED" -ne 0 ]]; then
+  echo -e "${RED}❌ Pre-push checks failed. Push blocked.${NC}"
+  echo -e "${YELLOW}   Fix issues or use 'git push --no-verify' to bypass${NC}"
+  exit 1
+fi
+
+echo -e "${GREEN}✅ All pre-push checks passed${NC}"

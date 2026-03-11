@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# pre-commit hook — Quick security scan on staged files.
+# Installed by: bash install.sh
+# Skip with: git commit --no-verify
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# Only scan staged text files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)
+[[ -z "$STAGED_FILES" ]] && exit 0
+
+# ── Colors ──
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+VIOLATIONS=0
+
+# ── Patterns ──
+PATH_PATTERNS='/Users/[a-zA-Z]|/home/[a-zA-Z]|C:\\Users\\'
+SECRET_PATTERNS='sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36}|ghs_[a-zA-Z0-9]{36}|AKIA[0-9A-Z]{16}'
+
+# ── Whitelist ──
+PATH_WHITELIST='/Users/xxx|/Users/\[|grep.*"/Users/'
+SECRET_WHITELIST='\$\{[A-Z_]|example|placeholder|changeme|your[_-]|NOT_A_REAL|<token>|<key>|<secret>'
+
+echo -e "${YELLOW}🔍 Pre-commit security check...${NC}"
+
+while IFS= read -r file; do
+  [[ -z "$file" ]] && continue
+  [[ ! -f "${REPO_ROOT}/${file}" ]] && continue
+
+  # Skip binary / non-text
+  case "$file" in
+    *.png|*.jpg|*.gif|*.ico|*.woff*|*.ttf|*.eot) continue ;;
+    */security-scan.sh|*/skill-lint.sh) continue ;;
+  esac
+
+  # Check staged content (not working tree)
+  CONTENT=$(git show ":${file}" 2>/dev/null || true)
+  [[ -z "$CONTENT" ]] && continue
+
+  # Path leak check
+  echo "$CONTENT" | grep -nE "$PATH_PATTERNS" 2>/dev/null | while IFS= read -r match; do
+    if ! echo "$match" | grep -qE "$PATH_WHITELIST"; then
+      echo -e "  ${RED}✗${NC} PERSONAL_PATH in ${file}: ${match}"
+      # Use a temp file to propagate violation count out of subshell
+      echo "1" >> /tmp/.precommit-violations-$$
+    fi
+  done
+
+  # Secret leak check
+  echo "$CONTENT" | grep -niE "$SECRET_PATTERNS" 2>/dev/null | while IFS= read -r match; do
+    if ! echo "$match" | grep -qiE "$SECRET_WHITELIST"; then
+      echo -e "  ${RED}✗${NC} SECRET_LEAK in ${file}: ${match}"
+      echo "1" >> /tmp/.precommit-violations-$$
+    fi
+  done
+
+done <<< "$STAGED_FILES"
+
+# Count violations
+if [[ -f /tmp/.precommit-violations-$$ ]]; then
+  VIOLATIONS=$(wc -l < /tmp/.precommit-violations-$$ | tr -d '[:space:]')
+  rm -f /tmp/.precommit-violations-$$
+fi
+
+if [[ "$VIOLATIONS" -gt 0 ]]; then
+  echo -e "${RED}❌ Blocked: ${VIOLATIONS} security violation(s) in staged files${NC}"
+  echo -e "${YELLOW}   Fix violations or use 'git commit --no-verify' to bypass${NC}"
+  exit 1
+fi
+
+echo -e "${GREEN}✅ Security check passed (${STAGED_FILES##*$'\n'} file(s))${NC}"
