@@ -160,7 +160,7 @@ lint_skill() {
   fi
 
   # ── 5. No hardcoded paths ──
-  if grep -nE '/Users/[a-zA-Z]|/home/[a-zA-Z]|C:\\Users\\' "$skill_file" 2>/dev/null | head -3 | while IFS= read -r match; do
+  if grep -nE '/Users/[a-zA-Z]|/home/[a-zA-Z]|C:\\Users\\' "$skill_file" 2>/dev/null | grep -v '/Users/xxx' | head -3 | while IFS= read -r match; do
     error "Hardcoded path in SKILL.md: ${match}"
   done; then
     :
