@@ -1,0 +1,23 @@
+{
+    "id": "huginn",
+    "name": "Huginn Automation",
+    "version": "1.1.1",
+    "description": "Huginn 自动化平台集成 — 管理 agents、events、日志，触发流水线运行",
+    "configSchema": {
+        "type": "object",
+        "properties": {
+            "huginnUrl": {
+                "type": "string",
+                "description": "Huginn instance URL (env: HUGINN_URL)"
+            },
+            "username": {
+                "type": "string",
+                "description": "Huginn login username (env: HUGINN_USERNAME)"
+            },
+            "password": {
+                "type": "string",
+                "description": "Huginn login password (env: HUGINN_PASSWORD)"
+            }
+        }
+    }
+}
