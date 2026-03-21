@@ -15,12 +15,24 @@ user-invocable: true
 确定操作系统和现有环境：
 
 ```bash
-# 检测 OS
+# 检测 OS (macOS/Linux)
 uname -s   # Darwin / Linux
-# Windows: 检查 WSL
-wsl --list 2>/dev/null
+```
+
+```powershell
+# 检测 OS (Windows PowerShell)
+$PSVersionTable.OS          # 显示 Windows 版本
+$env:OS                     # Windows_NT
+[System.Environment]::OSVersion.Platform   # Win32NT
 
 # 检测已有安装
+Get-Command openclaw -ErrorAction SilentlyContinue
+Get-Command node -ErrorAction SilentlyContinue
+Get-Command tailscale -ErrorAction SilentlyContinue
+```
+
+```bash
+# macOS/Linux 检测
 which openclaw 2>/dev/null
 which node 2>/dev/null
 which tailscale 2>/dev/null
@@ -40,13 +52,24 @@ curl -fsSL --proto '=https' --tlsv1.2 https://openclaw.ai/install.sh | bash
 curl -fsSL --proto '=https' --tlsv1.2 https://openclaw.ai/install-cli.sh | bash
 ```
 
-**Windows (PowerShell):**
+**Windows — Option A: PowerShell 原生（推荐）**
 ```powershell
-# 先确保 WSL2
-wsl --install -d Ubuntu-24.04
-# 在 WSL 内:
-curl -fsSL --proto '=https' --tlsv1.2 https://openclaw.ai/install.sh | bash
+# 确保 Node.js 22+ 已安装（如未安装）
+winget install OpenJS.NodeJS.LTS
+
+# 一键安装
+iwr -useb --proto https --tlsv1.2 https://openclaw.ai/install.ps1 | iex
 ```
+
+**Windows — Option B: WSL2（需要 Tailscale/systemd 时使用）**
+```powershell
+# 安装 WSL2 + Ubuntu
+wsl --install -d Ubuntu-24.04
+
+# 在 WSL 内按 Linux 步骤操作
+wsl -d Ubuntu-24.04 -- bash -c "curl -fsSL https://openclaw.ai/install.sh | bash"
+```
+
 
 ### 3. Onboarding
 
@@ -129,7 +152,7 @@ ssh -N -L 18789:127.0.0.1:18789 \
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🖥  Node Setup Complete
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-OS:        macOS 15.2 / Linux Ubuntu 24.04 / Windows WSL2
+OS:        macOS 15.2 / Linux Ubuntu 24.04 / Windows 11 (原生) / Windows WSL2
 OpenClaw:  v2026.x.x
 Node.js:   v22.x.x
 Gateway:   running (:18789)
