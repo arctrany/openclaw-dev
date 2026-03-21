@@ -1,17 +1,17 @@
 {
-    "id": "postiz",
-    "name": "Postiz Social Media",
-    "description": "Postiz 社媒管理集成 — 支持 28+ 平台的定时发布、内容管理和数据分析",
+    "id": "xpoz",
+    "name": "XPoz Social Media",
+    "description": "XPoz 社媒管理集成 — 支持 28+ 平台的定时发布、内容管理、数据分析、渠道管理和通知",
     "configSchema": {
         "type": "object",
         "properties": {
             "apiUrl": {
                 "type": "string",
-                "description": "Postiz API URL (env: POSTIZ_API_URL)"
+                "description": "XPoz API URL (env: XPOZ_API_URL)"
             },
             "apiKey": {
                 "type": "string",
-                "description": "Postiz API Key (env: POSTIZ_API_KEY)"
+                "description": "XPoz API Key (env: XPOZ_API_KEY)"
             }
         }
     }
