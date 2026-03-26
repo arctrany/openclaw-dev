@@ -4,11 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-**openclaw-dev** — a Claude Code plugin (v2.0.0) that teaches code agents to develop, operate, and debug OpenClaw. Distributes to Codex, Qwen, and Gemini via `install.sh`; iFlow and OpenCode support is planned. Language: Chinese (zh-CN) for docs/user-facing content; English for code and config.
+**openclaw-dev** — a code-agent toolkit for developing, operating, and debugging OpenClaw. The current repo release line is v2.2.x. It is authored primarily as a Claude Code plugin, can be installed into OpenClaw as a Claude-compatible bundle, and distributes to Codex, Qwen, and Gemini via `install.sh` / `install.ps1`. Language: Chinese (zh-CN) for docs/user-facing content; English for code and config.
 
 ## Plugin Loading
 
 Claude Code auto-discovers via `.claude-plugin/plugin.json`. No manual registration needed — skills, commands, and agents directories are loaded by convention.
+
+OpenClaw can also install this repo with `openclaw plugins install <path>`, but that path is bundle compatibility, not a native OpenClaw plugin. Treat bundle-mapped capabilities and native plugin capabilities separately.
 
 For local development iteration:
 
@@ -21,6 +23,9 @@ claude --plugin-dir .    # run from repo root
 ```bash
 # Distribute to all detected code agents
 bash install.sh
+
+# Windows PowerShell distribution
+.\install.ps1
 
 # Install to a specific project
 bash install.sh --project /path/to/project
@@ -45,7 +50,7 @@ No build step, no test framework, no package manager at repo root. The QA sub-pl
 
 ### Single Source of Truth
 
-`skills/`, `commands/`, `agents/` are canonical. Claude Code reads them directly via plugin auto-discovery. Other platforms (Codex, Qwen, Gemini) receive copies via `install.sh`.
+`skills/`, `commands/`, `agents/` are canonical. Claude Code reads them directly via plugin auto-discovery. OpenClaw may consume parts of the repo through bundle compatibility. Other platforms (Codex, Qwen, Gemini) receive copies via `install.sh` / `install.ps1`.
 
 ### 4 Orthogonal Skills
 

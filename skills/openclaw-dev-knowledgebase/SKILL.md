@@ -133,7 +133,7 @@ openclaw gateway start | stop | restart
 # 1. 创建目录 + manifest + package.json
 mkdir my-plugin && cd my-plugin
 cat > openclaw.plugin.json << 'EOF'
-{"id": "my-plugin", "name": "My Plugin", "description": "What it does"}
+{"id": "my-plugin", "name": "My Plugin", "description": "What it does", "configSchema": {"type": "object", "additionalProperties": false, "properties": {}}}
 EOF
 cat > package.json << 'EOF'
 {"name": "my-plugin", "version": "1.0.0", "type": "module", "openclaw": {"extensions": ["./index.ts"]}}
@@ -141,14 +141,24 @@ EOF
 
 # 2. TypeScript entry (必须在根目录，不能放 src/)
 cat > index.ts << 'EOF'
-export default function(api) {
-  api.registerTool({
-    name: "my_tool",
-    description: "My tool",
-    parameters: { type: "object", properties: { input: { type: "string" } } },
-    handler: async ({ input }) => ({ content: input }),
-  });
-}
+import { Type } from "@sinclair/typebox";
+import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
+
+export default definePluginEntry({
+  id: "my-plugin",
+  name: "My Plugin",
+  description: "What it does",
+  register(api) {
+    api.registerTool({
+      name: "my_tool",
+      description: "My tool",
+      parameters: Type.Object({ input: Type.String() }),
+      async execute(_toolCallId, params) {
+        return { content: [{ type: "text", text: params.input }] };
+      },
+    });
+  },
+});
 EOF
 
 # 3. 链接安装 (开发模式)

@@ -157,7 +157,11 @@ openclaw browser set device "iPhone 14" / set media dark
 
 ### 概念
 
-Plugin = TypeScript 模块，Gateway 进程内加载 (jiti)。可注册:
+OpenClaw 当前有两类可安装对象：
+- **native plugin** = TypeScript 模块，Gateway 进程内加载，可注册完整能力
+- **compatible bundle** = Claude / Codex / Cursor 内容包，安装后显示为 `Format: bundle`
+
+native plugin 可注册:
 - Gateway RPC 方法、HTTP handlers
 - Agent 工具
 - CLI 命令
@@ -175,7 +179,7 @@ Plugin = TypeScript 模块，Gateway 进程内加载 (jiti)。可注册:
 
 ### manifest
 
-每个 plugin 目录必须含 `openclaw.plugin.json`。
+只有 native plugin 必须含 `openclaw.plugin.json`。compatible bundle 使用各自生态的 manifest / 目录布局。
 
 ### 配置
 
@@ -222,6 +226,14 @@ api.registerCommand({ name: "mystatus", handler: (ctx) => ({ text: "..." }) });
 
 // 注册后台服务
 api.registerService({ id: "my-service", start: ..., stop: ... });
+
+// 其他新能力
+api.registerSpeechProvider({ ... });
+api.registerMediaUnderstandingProvider({ ... });
+api.registerImageGenerationProvider({ ... });
+api.registerWebSearchProvider({ ... });
+api.registerHttpRoute({ ... });
+api.registerContextEngine({ ... });
 ```
 
 ### 官方插件
@@ -243,12 +255,16 @@ api.registerService({ id: "my-service", start: ..., stop: ... });
 
 ```bash
 openclaw plugins list
-openclaw plugins info <id>
+openclaw plugins inspect <id>
 openclaw plugins install @openclaw/voice-call [--pin]
+openclaw plugins install <plugin>@<marketplace>
+openclaw plugins marketplace list <marketplace>
 openclaw plugins update <id> | --all
 openclaw plugins enable/disable <id>
 openclaw plugins doctor
 ```
+
+`info` 是 `inspect` 的别名。
 
 ### 安全
 

@@ -1,63 +1,186 @@
-
 # OpenClaw Plugin Architecture
 
-## 概念
+> 基准版本：对齐 2026-03-26 可公开访问的最新 OpenClaw 文档（`/plugins/manifest`、`/plugins/building-plugins`、`/plugins/bundles`、`/cli/plugins`、`/tools/plugin`）。
 
-OpenClaw plugin = **TypeScript 模块**，在 Gateway 进程内通过 jiti 加载。插件可注册工具、渠道、Provider 认证、Gateway RPC、CLI 命令、后台服务、Hooks 和自动回复命令。
+## 先分清两类对象
 
-⚠️ Plugins 运行在 Gateway 进程内 — 视为可信代码。
+OpenClaw 当前支持两类可安装对象：
 
-## Plugin 目录结构
+1. **native OpenClaw plugin**
+   - 运行在 Gateway 进程内
+   - 使用 `openclaw.plugin.json`
+   - 通过 `package.json` 的 `openclaw.extensions` 声明入口
+   - 可以注册工具、渠道、Provider、Hooks、HTTP route、Service、Context engine 等完整能力
 
-```
+2. **compatible bundle**
+   - 来自 Claude / Codex / Cursor 生态
+   - 安装后显示为 `Format: bundle`
+   - OpenClaw 只映射受支持的内容（skills、部分 commands、支持的 hook packs、MCP 配置等）
+   - 不是 native plugin，不应强制要求 `openclaw.plugin.json`
+
+## 检测优先级
+
+OpenClaw 按以下顺序识别目录：
+
+1. `openclaw.plugin.json` 或有效 `package.json` + `openclaw.extensions` → 视为 native plugin
+2. `.codex-plugin/`、`.claude-plugin/`、`.cursor-plugin/` 或默认 Claude/Cursor 布局 → 视为 compatible bundle
+
+如果目录同时包含 native 和 bundle 标记，OpenClaw 优先走 native 路径。
+
+## Native Plugin 目录结构
+
+```text
 my-plugin/
-├── openclaw.plugin.json    # Required: Plugin manifest
-├── package.json            # Required: name 必须匹配 manifest id
-├── index.ts                # Required: 入口文件��必须在根目录
+├── openclaw.plugin.json    # Required: native manifest
+├── package.json            # Required: openclaw.extensions
+├── index.ts                # Recommended entry in package root
 ├── skills/                 # Optional: bundled skills
 │   └── my-skill/
 │       └── SKILL.md
-└── src/                    # Optional: 辅助模块 (入口仍在根)
+└── src/                    # Optional: helper modules
 ```
 
 **关键规则**:
-1. Manifest 必须是 `openclaw.plugin.json`（不是 `.claude-plugin/plugin.json`）
-2. **入口必须是根目录的 `index.ts`**，不能放在 `src/` 下（会触发 "extension entry escapes package directory" 错误）
-3. **`package.json` 必须包含 `openclaw.extensions: ["./index.ts"]`**（值必须是文件路径，不能是 `["."]`）
-4. **`package.json` 的 `name` 必须与 manifest 的 `id` 完全一致**（否则触发 "plugin id mismatch"）
-5. 使用 kebab-case 命名
-6. 不需要 `tsconfig.json`，Gateway 通过 jiti 直接加载 TypeScript
+1. native plugin 必须有 `openclaw.plugin.json`
+2. manifest 负责 discovery / config validation / auth metadata，不负责 entrypoint
+3. entrypoint 写在 `package.json` 的 `openclaw.extensions`
+4. `configSchema` 是必填字段，即使插件没有配置也要给空 schema
+5. 入口文件通常放包根目录；`openclaw.extensions` 必须指向包内实际文件
+6. OpenClaw 允许安装 compatible bundles，但 bundle 不是 native plugin
 
-## Plugin Manifest (openclaw.plugin.json)
+## Compatible Bundle 目录结构
 
-仅需 3 个字段（`id`, `name`, `description`），`configSchema` 按需添加:
+### Claude bundle
+
+```text
+my-bundle/
+├── .claude-plugin/
+│   └── plugin.json         # Optional
+├── skills/
+├── commands/
+├── agents/
+├── hooks/
+├── .mcp.json
+└── settings.json
+```
+
+### Codex bundle
+
+```text
+my-bundle/
+├── .codex-plugin/
+│   └── plugin.json
+├── skills/
+├── hooks/
+├── .mcp.json
+└── .app.json
+```
+
+### Cursor bundle
+
+```text
+my-bundle/
+├── .cursor-plugin/
+│   └── plugin.json
+├── skills/
+├── .cursor/commands/
+├── .cursor/agents/
+├── .cursor/rules/
+└── .mcp.json
+```
+
+## Plugin Manifest (`openclaw.plugin.json`)
+
+### 最小示例
 
 ```json
 {
-  "id": "my-plugin",
-  "name": "My Plugin",
-  "description": "What this plugin does",
+  "id": "voice-call",
   "configSchema": {
     "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}
+```
+
+### 完整示例
+
+```json
+{
+  "id": "openrouter",
+  "name": "OpenRouter",
+  "description": "OpenRouter provider plugin",
+  "version": "1.0.0",
+  "providers": ["openrouter"],
+  "providerAuthEnvVars": {
+    "openrouter": ["OPENROUTER_API_KEY"]
+  },
+  "providerAuthChoices": [
+    {
+      "provider": "openrouter",
+      "method": "api-key",
+      "choiceId": "openrouter-api-key",
+      "choiceLabel": "OpenRouter API key",
+      "groupId": "openrouter",
+      "groupLabel": "OpenRouter",
+      "optionKey": "openrouterApiKey",
+      "cliFlag": "--openrouter-api-key",
+      "cliOption": "--openrouter-api-key <key>",
+      "cliDescription": "OpenRouter API key",
+      "onboardingScopes": ["text-inference"]
+    }
+  ],
+  "uiHints": {
+    "apiKey": {
+      "label": "API key",
+      "placeholder": "sk-or-v1-...",
+      "sensitive": true
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
     "properties": {
-      "apiUrl": { "type": "string", "description": "API URL (env: MY_API_URL)" },
-      "apiKey": { "type": "string", "description": "API Key (env: MY_API_KEY)" }
+      "apiKey": {
+        "type": "string"
+      }
     }
   }
 }
 ```
 
-> ⚠️ **Manifest 陷阱（已验证，基于 38 个内置 plugin 源码分析）**:
-> - **禁用 `entry` 字段** — 没有任何内置 plugin 使用此字段，Gateway 始终从 `package.json` 的 `openclaw.extensions` 解析入口
-> - **禁用 `version` / `author`** — 这些字段在 manifest 中无效，版本来自 `package.json`
-> - **禁用 `uiHints`** — 此字段已废弃，不被任何内置 plugin 使用
-> - **`configSchema` 不能有 `required` 数组** — 插件安装时 config 尚未注入（来自 env vars 或后续 `openclaw.json` 配置），`required` 校验会导致安装失败
+### 顶层字段速查
 
-## package.json (必需)
+| 字段 | 必填 | 说明 |
+|------|------|------|
+| `id` | 是 | Canonical plugin id |
+| `configSchema` | 是 | 插件配置的 inline JSON Schema |
+| `enabledByDefault` | 否 | bundled plugin 是否默认启用 |
+| `kind` | 否 | 独占类别，如 `memory` / `context-engine` |
+| `channels` | 否 | 该插件声明的 channel ids |
+| `providers` | 否 | 该插件声明的 provider ids |
+| `providerAuthEnvVars` | 否 | provider auth 的 cheap env metadata |
+| `providerAuthChoices` | 否 | onboarding / CLI auth 选择元数据 |
+| `skills` | 否 | 相对 plugin root 的 skill 目录 |
+| `name` | 否 | 可读名称 |
+| `description` | 否 | 简短说明 |
+| `version` | 否 | 信息性版本号 |
+| `uiHints` | 否 | 配置字段的 UI label / placeholder / sensitivity hints |
+
+### 与旧说法冲突的点
+
+- `version` 在 manifest 中是**合法可选字段**
+- `uiHints` 在 manifest 中是**合法可选字段**
+- manifest **不再声明 entrypoint**
+- `configSchema` **必须存在**，即使为空
+- `required` 不是被框架禁止的字段；它只是会参与配置校验，所以要按你的真实配置策略设计
+
+## `package.json`
 
 ```json
 {
-  "name": "my-plugin",
+  "name": "@myorg/openclaw-my-plugin",
   "version": "1.0.0",
   "type": "module",
   "openclaw": {
@@ -66,244 +189,90 @@ my-plugin/
 }
 ```
 
-> ⚠️ **package.json 陷阱**:
-> - `name` **必须与** `openclaw.plugin.json` 的 `id` **完全一致**（scoped packages 如 `@myorg/foo` 例外，会自动 normalize 为 `foo`）
-> - `openclaw.extensions` 必须指向具体文件 `["./index.ts"]`，不能是目录 `["."]`
-> - 缺少此字段会触发 "package.json missing openclaw.extensions"
-```
+### 关键规则
+
+- `openclaw.extensions` 必须指向包内具体文件，不能写成目录
+- 一个包可以暴露多个 extensions
+- `package.json` 的 `name` 不必与 manifest `id` 完全相同
+- 运行时身份以 manifest / entry export 的 plugin id 为准；安装后用 `openclaw plugins inspect <id>` 校验最终识别结果
 
 ## Entry Point
 
-两种导出格式：
+### 推荐写法：`definePluginEntry`
 
-### 函数式（推荐）
+```typescript
+import { Type } from "@sinclair/typebox";
+import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
+
+export default definePluginEntry({
+  id: "my-plugin",
+  name: "My Plugin",
+  description: "Adds a custom tool to OpenClaw",
+  register(api) {
+    api.registerTool({
+      name: "my_tool",
+      description: "Do a thing",
+      parameters: Type.Object({
+        input: Type.String()
+      }),
+      async execute(_toolCallId, params) {
+        return {
+          content: [{ type: "text", text: `Got: ${params.input}` }]
+        };
+      },
+    });
+  },
+});
+```
+
+### 兼容写法
 
 ```typescript
 export default function register(api) {
-  // 注册工具、渠道、hooks 等
-  api.registerTool({ name: "my_tool", ... });
+  api.registerTool({ name: "my_tool", description: "..." });
 }
 ```
 
-### 对象式
+或：
 
 ```typescript
 export default {
   id: "my-plugin",
   name: "My Plugin",
-  configSchema: { ... },
   register(api) {
-    // 注册逻辑
-  }
+    api.registerTool({ name: "my_tool", description: "..." });
+  },
 };
 ```
 
 ## Plugin API 能力
 
-### 注册 Agent 工具
-
 ```typescript
-export default function(api) {
-  api.registerTool({
-    name: "my_tool",
-    description: "Does something useful",
-    parameters: {
-      type: "object",
-      properties: {
-        query: { type: "string", description: "Search query" }
-      },
-      required: ["query"]
-    },
-    handler: async ({ query }) => {
-      const result = await doSomething(query);
-      return { content: result };
-    }
-  });
-}
+api.registerProvider({ /* 模型 Provider */ });
+api.registerChannel({ plugin: myChannelPlugin });
+api.registerTool({ /* Agent tool */ });
+api.registerHook("command:new", handler, { name: "..." });
+api.registerSpeechProvider({ /* TTS / STT */ });
+api.registerMediaUnderstandingProvider({ /* 图像/音频分析 */ });
+api.registerImageGenerationProvider({ /* 生图 */ });
+api.registerWebSearchProvider({ /* Web search */ });
+api.registerHttpRoute({ /* HTTP endpoint */ });
+api.registerCommand({ /* 自动回复命令 */ });
+api.registerCli(({ program }) => { /* CLI */ });
+api.registerContextEngine({ /* Context engine */ });
+api.registerService({ /* 后台服务 */ });
 ```
 
-### 注册 Channel
+## 发现与优先级
 
-```typescript
-const myChannel = {
-  id: "acmechat",
-  meta: {
-    id: "acmechat",
-    label: "AcmeChat",
-    selectionLabel: "AcmeChat (API)",
-    docsPath: "/channels/acmechat",
-    blurb: "AcmeChat messaging channel.",
-    aliases: ["acme"],
-  },
-  capabilities: { chatTypes: ["direct"] },
-  config: {
-    listAccountIds: (cfg) =>
-      Object.keys(cfg.channels?.acmechat?.accounts ?? {}),
-    resolveAccount: (cfg, accountId) =>
-      cfg.channels?.acmechat?.accounts?.[accountId ?? "default"],
-  },
-  outbound: {
-    deliveryMode: "direct",
-    sendText: async ({ text }) => ({ ok: true }),
-  },
-};
+默认发现顺序：
 
-export default function(api) {
-  api.registerChannel({ plugin: myChannel });
-}
-```
+1. `plugins.load.paths`
+2. `<workspace>/.openclaw/extensions/`
+3. `~/.openclaw/extensions/`
+4. `<openclaw>/extensions/`
 
-Channel 配置放在 `channels.<id>` 下（不是 `plugins.entries`）:
-
-```json5
-{
-  channels: {
-    acmechat: {
-      accounts: {
-        default: { token: "ACME_TOKEN", enabled: true },
-      },
-    },
-  },
-}
-```
-
-### 注册 Provider Auth
-
-```typescript
-export default function(api) {
-  api.registerProvider({
-    id: "acme",
-    label: "AcmeAI",
-    auth: [{
-      id: "oauth",
-      label: "OAuth",
-      kind: "oauth",
-      run: async (ctx) => ({
-        profiles: [{
-          profileId: "acme:default",
-          credential: {
-            type: "oauth", provider: "acme",
-            access: "...", refresh: "...",
-            expires: Date.now() + 3600 * 1000,
-          },
-        }],
-        defaultModel: "acme/opus-1",
-      }),
-    }],
-  });
-}
-```
-
-### 注册 Gateway RPC
-
-```typescript
-export default function(api) {
-  api.registerGatewayMethod("myplugin.status", ({ respond }) => {
-    respond(true, { ok: true, version: "1.0.0" });
-  });
-}
-```
-
-### 注册 CLI 命令
-
-```typescript
-export default function(api) {
-  api.registerCli(({ program }) => {
-    program.command("mycmd")
-      .description("Does something")
-      .action(() => console.log("Hello"));
-  }, { commands: ["mycmd"] });
-}
-```
-
-### 注册 Hooks
-
-```typescript
-export default function(api) {
-  api.registerHook("command:new", async (event) => {
-    console.log(`[my-plugin] Session reset: ${event.sessionKey}`);
-  }, {
-    name: "my-plugin.session-reset",
-    description: "Logs session resets",
-  });
-}
-```
-
-可用事件: `command:new`, `command:reset`, `command:stop`, `agent:bootstrap`, `gateway:startup`, `message:received`, `message:sent`
-
-### 注册自动回复命令
-
-```typescript
-export default function(api) {
-  api.registerCommand({
-    name: "mystatus",
-    description: "Show plugin status",
-    acceptsArgs: false,
-    requireAuth: true,
-    handler: (ctx) => ({
-      text: `Plugin running! Channel: ${ctx.channel}`,
-    }),
-  });
-}
-```
-
-### 注册后台服务
-
-```typescript
-export default function(api) {
-  api.registerService({
-    id: "my-poller",
-    start: () => api.logger.info("Poller started"),
-    stop: () => api.logger.info("Poller stopped"),
-  });
-}
-```
-
-### Runtime Helpers
-
-```typescript
-// TTS for telephony
-const result = await api.runtime.tts.textToSpeechTelephony({
-  text: "Hello from OpenClaw",
-  cfg: api.config,
-});
-```
-
-## Plugin 发现与优先级
-
-1. `plugins.load.paths` — 配置路径（最高）
-2. `<workspace>/.openclaw/extensions/` — workspace 级
-3. `~/.openclaw/extensions/` — 全局用户级
-4. `<openclaw>/extensions/` — 内置（默认禁用）
-
-同 ID 冲突时，按上述顺序取胜者。
-
-## Package Packs
-
-一个 npm 包可含多个 plugin:
-
-```json
-{
-  "name": "@acme/my-plugins",
-  "openclaw": {
-    "extensions": ["./src/safety.ts", "./src/tools.ts"]
-  }
-}
-```
-
-## Plugin Slots (独占类别)
-
-某些类别一次只能有一个 plugin 活跃:
-
-```json5
-{
-  plugins: {
-    slots: {
-      memory: "memory-core",  // 或 "memory-lancedb" 或 "none"
-    },
-  },
-}
-```
+同 ID 冲突时，按上述顺序取胜。
 
 ## 配置
 
@@ -311,8 +280,8 @@ const result = await api.runtime.tts.textToSpeechTelephony({
 {
   plugins: {
     enabled: true,
-    allow: ["voice-call"],     // 白名单 (可选)
-    deny: ["untrusted"],       // 黑名单 (deny wins)
+    allow: ["voice-call"],
+    deny: ["untrusted"],
     load: { paths: ["~/dev/my-extension"] },
     entries: {
       "voice-call": {
@@ -320,32 +289,57 @@ const result = await api.runtime.tts.textToSpeechTelephony({
         config: { provider: "twilio" },
       },
     },
+    slots: {
+      memory: "memory-core",
+      contextEngine: "legacy",
+    },
   },
 }
 ```
 
+## Compatible Bundles 当前映射能力
+
+### 已支持
+
+- bundle skill roots → OpenClaw skills
+- Claude `commands/` / Cursor `.cursor/commands/` → skill content
+- 符合 OpenClaw 预期的 Codex hook packs
+- `.mcp.json` 中受支持的 stdio MCP 配置
+- Claude `settings.json` 的部分默认值
+
+### 仅检测，不执行
+
+- Claude `agents`
+- Claude / Cursor `hooks.json`
+- Cursor `.cursor/agents`、`.cursor/rules`
+- 其他未映射的 bundle metadata
+
 ## 管理命令
 
 ```bash
-openclaw plugins list                          # 列出所有 plugins
-openclaw plugins info <id>                     # 详情
-openclaw plugins install @openclaw/voice-call  # 从 npm 安装
-openclaw plugins install ./my-plugin           # 从本地安装
-openclaw plugins install -l ./my-plugin        # 链接 (开发模式)
-openclaw plugins update <id>                   # 更新
-openclaw plugins update --all                  # 全部更新
-openclaw plugins enable <id>                   # 启用
-openclaw plugins disable <id>                  # 禁用
-openclaw plugins doctor                        # 诊断
+openclaw plugins list
+openclaw plugins inspect <id>
+openclaw plugins inspect <id> --json
+openclaw plugins install @openclaw/voice-call
+openclaw plugins install ./my-plugin
+openclaw plugins install -l ./my-plugin
+openclaw plugins install <plugin>@<marketplace>
+openclaw plugins marketplace list <marketplace>
+openclaw plugins update <id>
+openclaw plugins update --all
+openclaw plugins enable <id>
+openclaw plugins disable <id>
+openclaw plugins doctor
 ```
+
+`info` 仍可用，但现在只是 `inspect` 的别名。
 
 ## 安全
 
-- `npm install --ignore-scripts` — 无 postinstall 执行
-- 路径逃逸检测（symlink 检查）
-- world-writable 路径被阻止
-- `plugins.allow` 白名单推荐
-- 非 bundled plugin 无 provenance 时会警告
+- native plugins 在 Gateway 进程内运行，视为可信代码
+- npm 安装默认使用 `--ignore-scripts`
+- 插件安装与更新要按“执行代码”同等级别审查
+- `plugins.allow` 建议保持显式白名单
 
 ## 开发工作流
 
@@ -353,70 +347,53 @@ openclaw plugins doctor                        # 诊断
 # 1. 创建目录
 mkdir my-plugin && cd my-plugin
 
-# 2. 初始化三件套
+# 2. 创建 manifest
 cat > openclaw.plugin.json << 'EOF'
-{"id": "my-plugin", "name": "My Plugin", "description": "What it does"}
-EOF
-
-cat > package.json << 'EOF'
-{"name": "my-plugin", "version": "1.0.0", "type": "module", "openclaw": {"extensions": ["./index.ts"]}}
-EOF
-
-cat > index.ts << 'EOF'
-export default function(api) {
-  api.registerTool({
-    name: "my_tool",
-    description: "My tool",
-    parameters: { type: "object", properties: { query: { type: "string" } }, required: ["query"] },
-    handler: async ({ query }) => ({ content: `Result: ${query}` }),
-  });
-}
-EOF
-
-# 3. 链接安装 (开发模式)
-openclaw plugins install -l .
-
-# 4. 重启 Gateway 测试
-openclaw gateway restart
-# 或 launchd 管理时: launchctl kickstart -k gui/$(id -u)/ai.openclaw.gateway
-
-# 5. 检查加载
-openclaw plugins list
-grep 'my-plugin' ~/.openclaw/logs/gateway.log
-```
-
-## npm 发布
-
-```json
 {
-  "name": "@myorg/my-plugin",
-  "version": "1.0.0",
-  "type": "module",
-  "openclaw": {
-    "extensions": ["./index.ts"]
+  "id": "my-plugin",
+  "name": "My Plugin",
+  "description": "What it does",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
   }
 }
+EOF
+
+# 3. 创建 package.json
+cat > package.json << 'EOF'
+{
+  "name": "@myorg/openclaw-my-plugin",
+  "version": "1.0.0",
+  "type": "module",
+  "openclaw": { "extensions": ["./index.ts"] }
+}
+EOF
+
+# 4. 创建根目录入口
+cat > index.ts << 'EOF'
+import { Type } from "@sinclair/typebox";
+import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
+
+export default definePluginEntry({
+  id: "my-plugin",
+  name: "My Plugin",
+  description: "What it does",
+  register(api) {
+    api.registerTool({
+      name: "my_tool",
+      description: "My tool",
+      parameters: Type.Object({ query: Type.String() }),
+      async execute(_toolCallId, params) {
+        return { content: [{ type: "text", text: `Result: ${params.query}` }] };
+      },
+    });
+  },
+});
+EOF
+
+# 5. 链接安装并验证
+openclaw plugins install -l .
+openclaw plugins inspect my-plugin
 ```
-
-- Entry 可以是 `.ts` 或 `.js`，**必须在包根目录**
-- Scoped packages 自动 normalize ID (`@myorg/foo` → `foo`)
-- `openclaw plugins install @myorg/my-plugin` 从 npm registry 安装
-- `openclaw.plugin.json` 的 `id` 应为 normalize 后的名字 (`foo`)，不含 scope
-
-## 官方插件参考
-
-| 插件 | npm | 类型 |
-|------|-----|------|
-| Voice Call | `@openclaw/voice-call` | Tool |
-| MS Teams | `@openclaw/msteams` | Channel |
-| Matrix | `@openclaw/matrix` | Channel |
-| Nostr | `@openclaw/nostr` | Channel |
-| LINE | `@openclaw/line` | Channel |
-| Feishu | `@openclaw/feishu` | Channel |
-| Mattermost | `@openclaw/mattermost` | Channel |
-| Memory (Core) | 内置 | Slot: memory |
-| Memory (LanceDB) | 内置 | Slot: memory |
-
-## Additional Resources
-
-- **`references/examples-and-troubleshooting.md`** — Plugin 开发模式、Channel onboarding hooks、Provider auth 集成、故障排查

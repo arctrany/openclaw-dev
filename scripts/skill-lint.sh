@@ -53,6 +53,7 @@ lint_skill() {
   local past_frontmatter=false
 
   while IFS= read -r line; do
+    line="${line%$'\r'}"
     if [[ "$line" == "---" ]]; then
       if $in_frontmatter; then
         in_frontmatter=false

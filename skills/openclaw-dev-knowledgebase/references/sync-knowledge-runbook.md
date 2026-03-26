@@ -41,7 +41,7 @@ git log --since="$(date -r $LAST_SYNC '+%Y-%m-%d')" --name-only --pretty=format:
 | `docs/gateway/protocol.md` | `references/networking.md` |
 | `docs/install/*` | `references/install-and-debug.md` |
 | `docs/platforms/*` | `references/install-and-debug.md` |
-| `docs/refactor/plugin-sdk.md` | `references/plugin-api.md` |
+| `docs/plugins/*`, `docs/cli/plugins.md`, `docs/tools/plugin.md` | `references/plugin-api.md`, `references/plugin-management.md` |
 | `docs/concepts/multi-agent.md` | `references/agent-config.md` |
 
 ### 4. 生成差异报告

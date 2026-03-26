@@ -15,6 +15,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$SCRIPT_DIR"
 SKILLS_DIR="$SCRIPT_DIR/skills"
 COMMANDS_DIR="$SCRIPT_DIR/commands"
 VERSION=$(grep -m1 "^version:" "$SKILLS_DIR/openclaw-dev-knowledgebase/SKILL.md" 2>/dev/null | sed 's/version: *//' || echo "unknown")

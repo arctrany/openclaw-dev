@@ -2,8 +2,9 @@
 
 `plugins/qa` 是用于诊断 OpenClaw 能力的 QA 插件。建议用它做能力演化前后的基线对比。
 
-这是一个双入口插件：
-- Claude/OpenClaw：使用 `.claude-plugin/plugin.json` + `commands/` + `agents/`
+这是一个双入口模块：
+- Claude Code：使用 `.claude-plugin/plugin.json` + `commands/` + `agents/`
+- OpenClaw：可作为 **Claude-compatible bundle** 安装，但当前只应依赖其已映射能力；`agents/` 在 OpenClaw 里仍是 detect-only，不应当作可执行入口
 - Codex：使用本文件 `AGENTS.md`（并复用同一套 `scripts/`）
 
 ## 推荐入口（Codex）
@@ -48,6 +49,11 @@ bash scripts/codex-diagnose.sh --agent <agent-id> --quick
 
 ## Claude/OpenClaw 插件入口（已提供）
 
-- Command: `qa-agent`
-- Command: `qa-agent --fix`
-- Agent: `openclaw-capability-evolver`
+- Claude Code：
+  - Command: `qa-agent`
+  - Command: `qa-agent --fix`
+  - Agent: `openclaw-capability-evolver`
+- OpenClaw：
+  - 可安装本仓库作为 Claude-compatible bundle
+  - `commands/` 与 `skills/` 可按 bundle 映射工作
+  - `agents/` 目前不要当作 OpenClaw 运行时入口；QA 回归仍以仓库脚本为准

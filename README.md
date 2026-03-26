@@ -2,7 +2,7 @@
 
 **让你的 Code Agent 具备 OpenClaw 全栈开发能力。**
 
-一个 Claude Code 插件 — 安装后你的 code agent 就能开发、调试、运维、优化 OpenClaw。
+一个面向代码代理的 OpenClaw 开发工具包。默认以 Claude Code 插件形态使用，也可以作为 OpenClaw 可安装的 Claude-compatible bundle 使用。
 
 ## 快速安装
 
@@ -15,15 +15,28 @@ git clone https://github.com/arctrany/openclaw-dev.git
 
 插件自动注册，无需手动配置。
 
+### OpenClaw
+
+```bash
+git clone https://github.com/arctrany/openclaw-dev.git
+cd openclaw-dev
+openclaw plugins install .
+openclaw plugins inspect openclaw-dev
+```
+
+OpenClaw 会把本仓库识别为 Claude-compatible bundle。当前已可靠映射的是 `skills/`、`commands/` 等 bundle 能力；`agents/` 仍是 detect-only，不应当作 OpenClaw 原生 agent plugin。
+
 ### 其他平台（Codex / Qwen / Gemini）
 
 ```bash
 cd openclaw-dev && bash install.sh
 ```
 
-自动检测已安装的 agent 并分发到各平台的约定目录。
+自动检测已安装的 agent 并分发到各平台的约定目录。Windows 上优先使用 `.\install.ps1`。
 
-**更新（干净刷新）：** `cd openclaw-dev && git pull && bash install.sh`
+**更新（干净刷新）：**
+- Unix-like: `cd openclaw-dev && git pull && bash install.sh`
+- Windows PowerShell: `cd openclaw-dev; git pull; .\install.ps1`
 
 > 安装器使用 **清单同步（Manifest Sync）** — 自动追踪已安装的 skills 和 commands。
 > 当你删除某个 skill 后重新运行 `install.sh`，旧版本会从目标平台目录被**精准清理**，不留幽灵文件。
@@ -129,6 +142,15 @@ Gateway、Agents、Channels、Plugins 的统一状态视图。支持多 Gateway 
 | macOS | `curl -fsSL https://openclaw.ai/install.sh \| bash` |
 | Linux | `curl -fsSL https://openclaw.ai/install.sh \| bash` |
 | Windows | WSL2 + `iwr -useb https://openclaw.ai/install.ps1 \| iex` |
+
+## 本仓库的安装面
+
+| 目标 | 推荐命令 |
+|------|---------|
+| Claude Code | clone 仓库并在 Claude Code 中启用 |
+| OpenClaw | `openclaw plugins install .` |
+| Windows 本地分发 | `.\install.ps1` |
+| macOS / Linux / WSL 分发 | `bash install.sh` |
 
 ## 本地配置（可选）
 

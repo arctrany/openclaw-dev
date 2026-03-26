@@ -1,101 +1,99 @@
 # Plugin 创建指南
 
-交互式创建新 OpenClaw Plugin (extension)，包含 manifest、TypeScript entry point 和组件注册。
+交互式创建新 **native OpenClaw plugin**，包含 manifest、TypeScript entry point 和组件注册。
+
+> 如果用户要接入的是现成 Claude / Codex / Cursor 插件，优先保留原 bundle 结构。最新 OpenClaw 能直接安装这些 bundle，不需要强制改造成 native plugin。
 
 ## 需求收集
 
 1. **Plugin 名称** — kebab-case (例: `voice-assistant`, `slack-channel`)
 2. **Plugin 用途** — 添加什么能力？
 3. **注册组件** — Tool / Channel / Provider / Hook / CLI command / Service
-4. **Author** — 名称 (可选)
+4. **配置需求** — 是否需要 `configSchema` 字段（没有配置也必须给空 schema）
 
 ## 创建目录和 Manifest
 
 ```bash
 PLUGIN_NAME="<plugin-name>"
-mkdir -p "$PLUGIN_NAME/src"
+mkdir -p "$PLUGIN_NAME"
 ```
 
 **openclaw.plugin.json**:
 ```json
 {
-  "name": "<plugin-name>",
-  "version": "0.1.0",
+  "id": "<plugin-name>",
+  "name": "<Plugin Name>",
   "description": "<plugin-purpose>",
-  "author": { "name": "<author-name>" },
-  "entry": "./src/index.ts"
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
 }
 ```
 
 **package.json**:
 ```json
 {
-  "name": "<plugin-name>",
+  "name": "@myorg/openclaw-<plugin-name>",
   "version": "0.1.0",
   "type": "module",
-  "openclaw": { "extensions": ["."] },
-  "devDependencies": { "typescript": "^5.0.0" }
+  "openclaw": { "extensions": ["./index.ts"] },
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.38",
+    "openclaw": "latest"
+  }
 }
 ```
 
 ## TypeScript Entry Point
 
-**src/index.ts**:
+**index.ts**:
 ```typescript
-import type { PluginAPI } from "openclaw";
+import { Type } from "@sinclair/typebox";
+import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 
-export default function activate(api: PluginAPI) {
-  // Tool
-  api.registerTool("my-tool", {
-    description: "Description of what this tool does",
-    parameters: {
-      input: { type: "string", description: "Input parameter" },
-    },
-    async execute({ input }) {
-      return { result: `Processed: ${input}` };
-    },
-  });
+export default definePluginEntry({
+  id: "<plugin-name>",
+  name: "<Plugin Name>",
+  description: "<plugin-purpose>",
+  register(api) {
+    api.registerTool({
+      name: "my_tool",
+      description: "Description of what this tool does",
+      parameters: Type.Object({
+        input: Type.String({ description: "Input parameter" })
+      }),
+      async execute(_toolCallId, params) {
+        return {
+          content: [{ type: "text", text: `Processed: ${params.input}` }]
+        };
+      },
+    });
 
-  // Channel:  api.registerChannel("my-channel", { ... });
-  // Hook:     api.registerHook("onSessionStart", async (ctx) => { ... });
-  // CLI:      api.registerCLI("my-cmd", { ... });
-  // Service:  api.registerService("my-service", { ... });
-}
-```
-
-**tsconfig.json**:
-```json
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "outDir": "./dist",
-    "rootDir": "./src"
+    // Channel: api.registerChannel({ plugin: myChannelPlugin });
+    // Hook: api.registerHook("command:new", async (ctx) => { ... });
+    // CLI: api.registerCli(({ program }) => { ... });
+    // Service: api.registerService({ id: "my-service", start() {}, stop() {} });
   },
-  "include": ["src/**/*.ts"]
-}
+});
 ```
 
 ## 安装 Plugin
 
 ```bash
-# 链接到扩展目录
-ln -s "$(pwd)/$PLUGIN_NAME" ~/.openclaw/extensions/$PLUGIN_NAME
+# 开发模式链接安装
+openclaw plugins install -l "./$PLUGIN_NAME"
 
-# 重启 Gateway
-pkill -TERM openclaw-gateway
-sleep 3
-openclaw health
-openclaw plugins list
+# 检查识别结果
+openclaw plugins inspect "<plugin-name>"
 ```
 
 ## 验证
 
 ```bash
 openclaw plugins list | grep "$PLUGIN_NAME"
-openclaw gateway call --method "tools.list" 2>/dev/null | grep "my-tool"
+openclaw plugins inspect "$PLUGIN_NAME" --json
 ```
 
 ## 完成报告
@@ -104,12 +102,11 @@ openclaw gateway call --method "tools.list" 2>/dev/null | grep "my-tool"
 Plugin created: <plugin-name>
   Location:  ./<plugin-name>/
   Manifest:  openclaw.plugin.json
-  Entry:     src/index.ts
+  Entry:     index.ts
   Components:
     ✓ openclaw.plugin.json (manifest)
-    ✓ src/index.ts (entry point)
+    ✓ index.ts (entry point)
     ✓ package.json
-    ✓ tsconfig.json
   Registered:
     <tool|channel|hook|cli|service>: <name>
 ```
