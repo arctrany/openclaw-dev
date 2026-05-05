@@ -20,6 +20,18 @@
 | Dry run | `--dry-run` | `-DryRun` |
 | CI/自动化 | `--no-prompt --no-onboard` | `-NoOnboard` |
 
+### 升级到最新稳定版
+
+```bash
+openclaw update status --json
+openclaw update --dry-run
+openclaw update --yes
+```
+
+- `openclaw update` 会根据安装方式自动走 package manager 或 git checkout 更新路径。
+- `availability.available: false` 表示当前 channel 已是最新，不需要重复安装。
+- 如果 `doctor` 报 Gateway service 混入代理环境变量或版本管理 PATH，更新后执行 `openclaw gateway install --force` 重建服务定义。
+
 ### 从源码
 
 ```bash
@@ -73,6 +85,8 @@ openclaw channels status --probe    # Channel 探测
 openclaw agents list --bindings     # Agent 路由
 openclaw plugins list               # Plugin 状态
 openclaw plugins doctor             # Plugin 诊断
+openclaw update status --json       # 当前 channel / 最新版本 / 可升级状态
+openclaw security audit --deep      # 深度安全审计
 ```
 
 ### 常见问题
@@ -82,6 +96,11 @@ openclaw plugins doctor             # Plugin 诊断
 | Gateway 不启动 | `openclaw doctor` | `lsof -i :18789` 检查端口 |
 | Channel 连接失败 | `openclaw channels status --probe` | 检查 token |
 | Skill 不加载 | `openclaw status --deep` | 检查 workspace 路径 |
+| groupChat 回复落到源群 | `openclaw doctor` | 给 agent 启用 message tool，或把 `messages.groupChat.visibleReplies` 改成 `automatic` |
+| owner-only 命令无法执行 | `openclaw doctor` | 设置 `commands.ownerAllowFrom` 并重启 Gateway |
+| Qwen 登录失效 | `openclaw doctor` | 改用 `openclaw onboard --auth-choice qwen-api-key` 或 `qwen-api-key-cn` |
+| session / transcript 不一致 | `openclaw doctor` + `openclaw sessions cleanup --dry-run` | 预览后再做 `--fix-missing` |
+| Gateway service 环境污染 | `openclaw doctor` | `openclaw gateway install --force` 重建服务 |
 | npm EACCES (Linux) | `npm config get prefix` | 用 `install-cli.sh` |
 | openclaw 找不到 | `which openclaw` | 检查 PATH |
 | WSL portproxy 失效 | `netsh interface portproxy show all` | WSL IP 变化需重配 |

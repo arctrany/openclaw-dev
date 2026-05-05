@@ -3,7 +3,7 @@ name: openclaw-node-operations
 description: "Use this skill when asked to install OpenClaw, set up a node, configure a Gateway, onboard a new machine, debug OpenClaw issues (read logs, run doctor, health checks, diagnose faults), fix Gateway problems, set up networking (Tailscale, SSH tunnels), check node status, troubleshoot connectivity, configure remote access, deploy on Linux/Windows/macOS, lint config, validate openclaw.json, check fleet status, query agent/channel/plugin status, or run systematic diagnostics. Also use for: 'diagnose OpenClaw', 'lint my config', 'validate configuration', 'show status', 'fleet status', 'Gateway health', 'check OpenClaw health'. Covers hands-on operations: installation, onboarding, Gateway service management, remote access, cross-OS support, debugging, monitoring, diagnostics, config validation. For architecture/theory questions use openclaw-dev-knowledgebase instead."
 metadata: {"clawdbot":{"always":false,"emoji":"🖥️","requires":{"bins":["jq","ssh"]}}}
 user-invocable: true
-version: 3.0.0
+version: 3.1.0
 ---
 
 # OpenClaw Node Operations
@@ -50,6 +50,19 @@ openclaw onboard
 | Beta 版 | `--beta` | `-Tag beta` |
 | Dry run | `--dry-run` | `-DryRun` |
 | CI/自动化 | `--no-prompt --no-onboard` | `-NoOnboard` |
+
+### 升级到最新稳定版
+
+```bash
+openclaw update status --json
+openclaw update --dry-run
+openclaw update --yes
+```
+
+- `openclaw update` 是官方首选升级入口，会按实际安装方式处理 package / git checkout。
+- 先看 `update status`：若 `availability.available: false`，说明本机已经在当前 channel 的最新版本。
+- `--dry-run` 先预览动作；自动化或无人值守环境再加 `--yes`。
+- 若 `doctor` 提示 Gateway service 持久化了代理环境变量或过长 PATH，升级后执行 `openclaw gateway install --force` 重建服务定义。
 
 ### 平台特殊注意
 
@@ -278,6 +291,8 @@ openclaw channels status --probe    # Channel 连接探测
 openclaw agents list --bindings     # Agent 路由检查
 openclaw plugins list               # Plugin 加载状态
 openclaw plugins doctor             # Plugin 诊断
+openclaw update status --json       # 当前 channel / 最新版本 / 可升级状态
+openclaw security audit --deep      # 深度安全审计
 ```
 
 ### 常见问题
@@ -295,6 +310,17 @@ openclaw plugins doctor             # Plugin 诊断
 | SSH Host key 报错 | `ssh -v user@host 2>&1 \| grep "Host key"` | `ssh-keygen -R <host>` 清除旧指纹 |
 | SSH Too many auth failures | `ssh -v user@host 2>&1 \| grep -c "Offering"` | 加 `-o IdentitiesOnly=yes -i <key>` |
 | SSH Permission denied | `ssh -o IdentitiesOnly=yes -i <key> user@host` | 检查远程 `~/.ssh/authorized_keys` 权限 (700/600) |
+
+### Doctor 重点告警速查
+
+| Doctor 告警 | 含义 | 处理 |
+|------------|------|------|
+| `messages.groupChat.visibleReplies = "message_tool"` but tool unavailable | 群聊里普通回复可能直接发到源群 | 为对应 agent 启用 message tool，或改成 `automatic` |
+| `commands.ownerAllowFrom` 未配置 | owner-only 命令和危险操作审批没有明确人类 owner | `openclaw config set commands.ownerAllowFrom '["telegram:123456789"]'` 后重启 Gateway |
+| `qwen-portal:* expired` + portal deprecated | 老的 Qwen portal OAuth 已废弃 | 改用 `openclaw onboard --auth-choice qwen-api-key` 或 `qwen-api-key-cn` |
+| stale agent dir / missing transcripts | 磁盘 session 状态与 `agents.list` 或 transcript store 不一致 | 用 `openclaw sessions --store` / `openclaw sessions cleanup --dry-run` 预览，再决定清理 |
+| gateway service embeds proxy env / long PATH | LaunchAgent/systemd 持久化了不该落盘的代理变量或版本管理 PATH | 审核环境后执行 `openclaw gateway install --force` 重建服务 |
+| bundled provider discovery legacy mode | `plugins.allow` 已收紧，但 bundled provider 仍可能出现在 inventory | 确认允许列表后把 `plugins.bundledDiscovery` 设为 `allowlist` |
 
 ## 组网
 
@@ -332,4 +358,3 @@ jq '{gateway: .gateway, agents: [.agents.list[] | {id,name,model}]}' ~/.openclaw
 | **系统性诊断** | `references/diagnose-runbook.md` | 5 步方法论分析 + 结构化报告 + 故障模式沉淀 |
 | **配置验证** | `references/lint-config-runbook.md` | 验证 openclaw.json 语法/安全/路径/Auth |
 | **状态仪表盘** | `references/status-runbook.md` | 分层状态查询 (FSFR) + 降级策略 + 格式化输出 |
-
