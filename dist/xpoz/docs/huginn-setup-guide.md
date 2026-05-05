@@ -103,7 +103,7 @@ Davos (adm) — 内容创作，调用 postiz_create_post
     │
     │  HTTP POST (Authorization: <POSTIZ_API_KEY>)
     ▼
-Postiz (192.168.1.78:4007) — 存为草稿，等待人工审核
+Postiz (<NAS-IP>:4007) — 存为草稿，等待人工审核
     │
     ▼
 社交平台（Twitter, LinkedIn, 小红书...）

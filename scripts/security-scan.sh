@@ -32,17 +32,17 @@ should_skip() {
   local file="$1"
   case "$file" in
     # Skip git internals
-    */.git/*) return 0 ;;
+    .git/*|*/.git/*) return 0 ;;
     # Skip this script itself
-    */security-scan.sh) return 0 ;;
+    scripts/security-scan.sh|scripts/security-scan.ps1|*/security-scan.sh|*/security-scan.ps1) return 0 ;;
     # Skip git hook scripts (contain scan patterns as whitelists)
-    */hooks/git/*) return 0 ;;
+    hooks/git/*|*/hooks/git/*) return 0 ;;
     # Skip binary files
     *.png|*.jpg|*.jpeg|*.gif|*.ico|*.woff|*.woff2|*.ttf|*.eot) return 0 ;;
     # Skip generated platform dirs (should be gitignored, but double-check)
-    */.claude/*|*/.agents/*|*/.codex/*|*/.qwen/*) return 0 ;;
+    .claude/*|.agents/*|.codex/*|.qwen/*|*/.claude/*|*/.agents/*|*/.codex/*|*/.qwen/*) return 0 ;;
     # Skip lock files
-    */package-lock.json|*/yarn.lock) return 0 ;;
+    package-lock.json|yarn.lock|*/package-lock.json|*/yarn.lock) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -232,8 +232,9 @@ fi
 
 while IFS= read -r file; do
   full_path="${REPO_ROOT}/${file}"
+  rel_path="${file#./}"
   [[ -f "$full_path" ]] || continue
-  should_skip "$full_path" && continue
+  should_skip "$rel_path" && continue
 
   # Skip binary files
   file_type=$(file -b --mime-type "$full_path" 2>/dev/null || echo "unknown")
@@ -247,28 +248,28 @@ while IFS= read -r file; do
   # 1. Path leak check — one grep per file
   while IFS=: read -r line_num content; do
     if ! is_whitelisted_path "$content"; then
-      log_violation "PERSONAL_PATH" "$file" "$line_num" "$content"
+      log_violation "PERSONAL_PATH" "$rel_path" "$line_num" "$content"
     fi
   done < <(grep -nE "$COMBINED_PATH" "$full_path" 2>/dev/null || true)
 
   # 2. Secret check — one grep per file
   while IFS=: read -r line_num content; do
     if ! is_whitelisted_secret "$content"; then
-      log_violation "SECRET_LEAK" "$file" "$line_num" "$content"
+      log_violation "SECRET_LEAK" "$rel_path" "$line_num" "$content"
     fi
   done < <(grep -niE "$COMBINED_SECRET" "$full_path" 2>/dev/null || true)
 
   # 3. Privacy check — one grep per file
   while IFS=: read -r line_num content; do
     if ! is_whitelisted_privacy "$content"; then
-      log_violation "PRIVACY_INFO" "$file" "$line_num" "$content"
+      log_violation "PRIVACY_INFO" "$rel_path" "$line_num" "$content"
     fi
   done < <(grep -nE "$COMBINED_PRIVACY" "$full_path" 2>/dev/null || true)
 
   # 4. Identity check — one grep per file
   if [[ -n "$IDENTITY_TMP" ]]; then
     while IFS=: read -r line_num content; do
-      log_violation "IDENTITY_LEAK" "$file" "$line_num" "$content"
+      log_violation "IDENTITY_LEAK" "$rel_path" "$line_num" "$content"
     done < <(grep -niF -f "$IDENTITY_TMP" "$full_path" 2>/dev/null || true)
   fi
 

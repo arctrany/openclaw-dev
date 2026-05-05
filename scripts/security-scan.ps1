@@ -51,10 +51,10 @@ function Write-Violation {
 # ── Skip list ─────────────────────────────────────────────
 function Test-ShouldSkip {
     param([string]$Path)
-    if ($Path -match '\\.git\\') { return $true }
-    if ($Path -match 'security-scan\.(sh|ps1)') { return $true }
+    if ($Path -match '(^|[\\/])\.git([\\/]|$)') { return $true }
+    if ($Path -match '(^|[\\/])scripts[\\/]+security-scan\.(sh|ps1)$' -or $Path -match 'security-scan\.(sh|ps1)$') { return $true }
     if ($Path -match '\.(png|jpg|jpeg|gif|ico|woff|woff2|ttf|eot)$') { return $true }
-    if ($Path -match '\\\.claude\\|\\\.agents\\|\\\.codex\\|\\\.qwen\\') { return $true }
+    if ($Path -match '(^|[\\/])\.(claude|agents|codex|qwen)([\\/]|$)') { return $true }
     if ($Path -match 'package-lock\.json|yarn\.lock') { return $true }
     return $false
 }
@@ -118,7 +118,8 @@ if ($Files.Count -eq 0) {
 
 foreach ($FilePath in $Files) {
     if (-not (Test-Path $FilePath -PathType Leaf)) { continue }
-    if (Test-ShouldSkip $FilePath) { continue }
+    $RelPath = $FilePath.Replace($RepoRoot + '\', '').Replace($RepoRoot + '/', '')
+    if (Test-ShouldSkip $RelPath) { continue }
 
     # Skip non-text files
     $Ext = [System.IO.Path]::GetExtension($FilePath).ToLower()
@@ -129,7 +130,6 @@ foreach ($FilePath in $Files) {
     catch { continue }
 
     $TotalFiles++
-    $RelPath = $FilePath.Replace($RepoRoot + '\', '').Replace($RepoRoot + '/', '')
     $LineNum = 0
 
     foreach ($LineText in $FileContent) {

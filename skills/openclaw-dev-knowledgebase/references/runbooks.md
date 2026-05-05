@@ -107,12 +107,21 @@ tail -n 120 /tmp/openclaw-gateway.log
 ### 更新 OpenClaw
 
 ```bash
-# 远程
-sudo npm i -g openclaw@latest
-openclaw --version
+# 1. 先看当前 channel 和可升级状态
+openclaw update status --json
 
-# 重启 Gateway 使更新生效
-pkill -TERM openclaw-gateway
+# 2. 预览升级动作
+openclaw update --dry-run
+
+# 3. 执行升级（无人值守可加 --yes）
+openclaw update --yes
+
+# 4. 验证版本与健康
+openclaw --version
+openclaw doctor
+
+# 5. 若 doctor 提示 gateway service 混入代理环境变量或 PATH 过长
+openclaw gateway install --force
 ```
 
 ### 批量部署 Skills 到远程
