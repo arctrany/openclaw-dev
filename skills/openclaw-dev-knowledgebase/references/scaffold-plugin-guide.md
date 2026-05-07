@@ -4,11 +4,13 @@
 
 > 如果用户要接入的是现成 Claude / Codex / Cursor 插件，优先保留原 bundle 结构。最新 OpenClaw 能直接安装这些 bundle，不需要强制改造成 native plugin。
 
+> 如果用户提到“provider plugin”或“模型插件”，先确认它属于哪种 capability：文本推理、speech、realtime、media、image、music、video、web fetch、web search。不要再默认只有旧式 provider 一类。
+
 ## 需求收集
 
 1. **Plugin 名称** — kebab-case (例: `voice-assistant`, `slack-channel`)
 2. **Plugin 用途** — 添加什么能力？
-3. **注册组件** — Tool / Channel / Provider / Hook / CLI command / Service
+3. **注册组件** — Tool / Channel / Text provider / Speech / Realtime / Media understanding / Image / Music / Video / Web fetch / Web search / Hook / CLI command / Service
 4. **配置需求** — 是否需要 `configSchema` 字段（没有配置也必须给空 schema）
 
 ## 创建目录和 Manifest
@@ -24,6 +26,7 @@ mkdir -p "$PLUGIN_NAME"
   "id": "<plugin-name>",
   "name": "<Plugin Name>",
   "description": "<plugin-purpose>",
+  "contracts": {},
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
@@ -72,6 +75,12 @@ export default definePluginEntry({
     });
 
     // Channel: api.registerChannel({ plugin: myChannelPlugin });
+    // Text provider: api.registerProvider({ ... });
+    // Speech: api.registerSpeechProvider({ ... });
+    // Realtime: api.registerRealtimeVoiceProvider({ ... });
+    // Media: api.registerMediaUnderstandingProvider({ ... });
+    // Image / Music / Video: api.registerImageGenerationProvider({ ... });
+    // Web: api.registerWebFetchProvider({ ... });
     // Hook: api.registerHook("command:new", async (ctx) => { ... });
     // CLI: api.registerCli(({ program }) => { ... });
     // Service: api.registerService({ id: "my-service", start() {}, stop() {} });

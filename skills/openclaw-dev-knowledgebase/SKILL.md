@@ -82,7 +82,7 @@ OpenClaw 全面知识库 — 功能/架构/开发/部署/运维 + plugin API + a
 Gateway (控制面, 单进程)
 ├── Agents (多个, 各有独立 workspace/sessions)
 ├── Channels (WhatsApp, Telegram, Discord, iMessage...)
-├── Plugins (TypeScript 扩展: tools/channels/providers)
+├── Plugins (TypeScript 扩展: tools/channels/text/speech/media/web/hooks/services)
 ├── Nodes (配对设备: exec/screen/canvas/camera)
 └── Sessions (DM 隔离, 每次对话一个 session)
 ```

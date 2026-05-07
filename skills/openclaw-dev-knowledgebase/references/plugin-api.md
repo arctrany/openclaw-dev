@@ -1,6 +1,6 @@
 # OpenClaw Plugin Architecture
 
-> 基准版本：对齐 2026-03-26 可公开访问的最新 OpenClaw 文档（`/plugins/manifest`、`/plugins/building-plugins`、`/plugins/bundles`、`/cli/plugins`、`/tools/plugin`）。
+> 基准版本：对齐 2026-05-07 校验的公开 OpenClaw 文档（`/plugins/manifest`、`/plugins/building-plugins`、`/plugins/bundles`、`/cli/plugins`、`/tools/plugin`）。
 
 ## 先分清两类对象
 
@@ -10,7 +10,7 @@ OpenClaw 当前支持两类可安装对象：
    - 运行在 Gateway 进程内
    - 使用 `openclaw.plugin.json`
    - 通过 `package.json` 的 `openclaw.extensions` 声明入口
-   - 可以注册工具、渠道、Provider、Hooks、HTTP route、Service、Context engine 等完整能力
+   - 现在按**能力模型**暴露运行时能力：tools、channels、text/model provider、speech、realtime、media understanding、image/music/video generation、web fetch/search、hooks、HTTP route、service、context engine
 
 2. **compatible bundle**
    - 来自 Claude / Codex / Cursor 生态
@@ -42,7 +42,7 @@ my-plugin/
 
 **关键规则**:
 1. native plugin 必须有 `openclaw.plugin.json`
-2. manifest 负责 discovery / config validation / auth metadata，不负责 entrypoint
+2. manifest 负责 discovery / config validation / setup/auth metadata / capability snapshot，不负责 entrypoint
 3. entrypoint 写在 `package.json` 的 `openclaw.extensions`
 4. `configSchema` 是必填字段，即使插件没有配置也要给空 schema
 5. 入口文件通常放包根目录；`openclaw.extensions` 必须指向包内实际文件
@@ -104,17 +104,22 @@ my-bundle/
 }
 ```
 
-### 完整示例
+### 能力导向示例
 
 ```json
 {
   "id": "openrouter",
   "name": "OpenRouter",
-  "description": "OpenRouter provider plugin",
+  "description": "OpenRouter text inference plugin",
   "version": "1.0.0",
   "providers": ["openrouter"],
-  "providerAuthEnvVars": {
-    "openrouter": ["OPENROUTER_API_KEY"]
+  "setup": {
+    "providers": {
+      "openrouter": {
+        "authMethods": ["api-key"],
+        "envVars": ["OPENROUTER_API_KEY"]
+      }
+    }
   },
   "providerAuthChoices": [
     {
@@ -131,6 +136,12 @@ my-bundle/
       "onboardingScopes": ["text-inference"]
     }
   ],
+  "modelSupport": {
+    "openrouter": ["openai/gpt-4.1-mini", "anthropic/claude-sonnet-4.5"]
+  },
+  "contracts": {
+    "textInference": { "providers": ["openrouter"] }
+  },
   "uiHints": {
     "apiKey": {
       "label": "API key",
@@ -160,8 +171,12 @@ my-bundle/
 | `kind` | 否 | 独占类别，如 `memory` / `context-engine` |
 | `channels` | 否 | 该插件声明的 channel ids |
 | `providers` | 否 | 该插件声明的 provider ids |
-| `providerAuthEnvVars` | 否 | provider auth 的 cheap env metadata |
+| `setup` | 否 | cheap setup metadata；当前文档更推荐把 provider/channel env 和 auth 入口写在这里 |
 | `providerAuthChoices` | 否 | onboarding / CLI auth 选择元数据 |
+| `modelSupport` | 否 | 插件声明支持的模型 / provider 能力快照 |
+| `contracts` | 否 | 插件对外声明的能力契约；当前能力模型的核心入口 |
+| `qaRunners` | 否 | 插件自带 QA / smoke runner 元数据 |
+| `activation` | 否 | 插件激活和加载提示 |
 | `skills` | 否 | 相对 plugin root 的 skill 目录 |
 | `name` | 否 | 可读名称 |
 | `description` | 否 | 简短说明 |
@@ -174,7 +189,18 @@ my-bundle/
 - `uiHints` 在 manifest 中是**合法可选字段**
 - manifest **不再声明 entrypoint**
 - `configSchema` **必须存在**，即使为空
+- `providerAuthEnvVars` 这类旧式 provider-only 元数据不再是首选写法；优先看 `setup.providers`、`providerAuthChoices`、`modelSupport`、`contracts`
 - `required` 不是被框架禁止的字段；它只是会参与配置校验，所以要按你的真实配置策略设计
+
+## 能力模型迁移要点
+
+如果你脑中还是旧的 “plugin = tools/channels/providers” 模型，先切换到下面这套：
+
+- manifest 现在要描述**能力面**，不只是 provider id
+- provider 插件不再只是 auth/env 声明；还要表达它支持哪些模型与哪些 capability contract
+- `contracts` 是对运行时能力的静态声明；`register(api)` 是动态注册
+- `setup.providers` / `setup.channels` 是 cheap setup metadata；不要把所有安装/授权逻辑塞进旧的 top-level provider 字段
+- QA 不再只是仓库外约定；插件可以通过 `qaRunners` 暴露 smoke / regression 入口
 
 ## `package.json`
 
@@ -247,14 +273,21 @@ export default {
 
 ## Plugin API 能力
 
+OpenClaw 当前把 plugin API 看作 capability surface，而不是单一 “provider plugin” 接口：
+
 ```typescript
-api.registerProvider({ /* 模型 Provider */ });
+api.registerProvider({ /* 文本 / 模型 provider */ });
 api.registerChannel({ plugin: myChannelPlugin });
 api.registerTool({ /* Agent tool */ });
 api.registerHook("command:new", handler, { name: "..." });
 api.registerSpeechProvider({ /* TTS / STT */ });
+api.registerRealtimeTranscriptionProvider({ /* 实时转写 */ });
+api.registerRealtimeVoiceProvider({ /* 实时语音对话 */ });
 api.registerMediaUnderstandingProvider({ /* 图像/音频分析 */ });
 api.registerImageGenerationProvider({ /* 生图 */ });
+api.registerMusicGenerationProvider({ /* 音乐生成 */ });
+api.registerVideoGenerationProvider({ /* 视频生成 */ });
+api.registerWebFetchProvider({ /* Web fetch */ });
 api.registerWebSearchProvider({ /* Web search */ });
 api.registerHttpRoute({ /* HTTP endpoint */ });
 api.registerCommand({ /* 自动回复命令 */ });
@@ -320,6 +353,7 @@ api.registerService({ /* 后台服务 */ });
 openclaw plugins list
 openclaw plugins inspect <id>
 openclaw plugins inspect <id> --json
+openclaw plugins inspect --json
 openclaw plugins install @openclaw/voice-call
 openclaw plugins install ./my-plugin
 openclaw plugins install -l ./my-plugin
@@ -353,6 +387,7 @@ cat > openclaw.plugin.json << 'EOF'
   "id": "my-plugin",
   "name": "My Plugin",
   "description": "What it does",
+  "contracts": {},
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
