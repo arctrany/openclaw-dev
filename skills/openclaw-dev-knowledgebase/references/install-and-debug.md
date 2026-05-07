@@ -66,13 +66,31 @@ netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=18789 conn
 ### 诊断命令
 
 ```bash
-openclaw doctor                     # 自动诊断 + 修复
+openclaw doctor                     # 只读诊断
+openclaw doctor --fix               # 应用建议修复
 openclaw health                     # Gateway 健康
 openclaw status --deep --all        # 深度状态
 openclaw channels status --probe    # Channel 探测
 openclaw agents list --bindings     # Agent 路由
 openclaw plugins list               # Plugin 状态
 openclaw plugins doctor             # Plugin 诊断
+openclaw update status              # 更新通道 + 最新稳定版
+```
+
+### 2026.5.6: Codex OAuth 路由恢复
+
+先确认当前更新状态：
+
+```bash
+openclaw update status
+openclaw update --dry-run
+```
+
+如果 `2026.5.5` 的 `doctor --fix` 把默认 Codex OAuth 路由错误改写成了 `openai/*`，先恢复再继续排障：
+
+```bash
+openclaw models set openai-codex/gpt-5.5
+openclaw config validate
 ```
 
 ### 常见问题
@@ -82,6 +100,7 @@ openclaw plugins doctor             # Plugin 诊断
 | Gateway 不启动 | `openclaw doctor` | `lsof -i :18789` 检查端口 |
 | Channel 连接失败 | `openclaw channels status --probe` | 检查 token |
 | Skill 不加载 | `openclaw status --deep` | 检查 workspace 路径 |
+| `2026.5.5` 后 Codex OAuth 路由异常 | `openclaw update status` | `openclaw models set openai-codex/gpt-5.5 && openclaw config validate` |
 | npm EACCES (Linux) | `npm config get prefix` | 用 `install-cli.sh` |
 | openclaw 找不到 | `which openclaw` | 检查 PATH |
 | WSL portproxy 失效 | `netsh interface portproxy show all` | WSL IP 变化需重配 |

@@ -18,7 +18,7 @@ version: 3.0.0
 >
 > ⛔ **铁律: 遇到问题先跑 `openclaw doctor`**
 > - 任何异常（Gateway 不启动、Agent 不响应、Skill 不加载、Channel 断连）先运行 `openclaw doctor`
-> - doctor 会自动检测并修复常见问题，输出结果后再决定下一步
+> - `openclaw doctor` 默认只做诊断；只有 `--fix` / `--repair` 才会改配置或状态。先看输出，再决定是否在备份或沙箱里应用修复
 
 ## 安装
 
@@ -166,7 +166,25 @@ openclaw gateway status      # 状态
 # 健康检查
 openclaw health              # 基础健康
 openclaw status --deep       # 深度状态
-openclaw doctor              # 诊断修复
+openclaw doctor              # 只读诊断
+openclaw doctor --fix        # 应用建议修复
+openclaw update status       # 检查 stable/beta/dev 与最新版本
+```
+
+### 2026.5.6 运维提示
+
+先看更新状态，再决定是否升级或修复：
+
+```bash
+openclaw update status
+openclaw update --dry-run
+```
+
+如果在 `2026.5.5` 上运行过 `openclaw doctor --fix`，且默认 Codex OAuth 路由被错误改写成 `openai/*`，先恢复再继续排障：
+
+```bash
+openclaw models set openai-codex/gpt-5.5
+openclaw config validate
 ```
 
 ### 多 Gateway (同一机器)
@@ -271,13 +289,15 @@ export OPENCLAW_SSH_PORT=22
 ### 常用诊断命令
 
 ```bash
-openclaw doctor                     # 自动诊断 + 修复
+openclaw doctor                     # 只读诊断
+openclaw doctor --fix               # 应用修复（先审查输出）
 openclaw health                     # Gateway 健康
 openclaw status --deep --all        # 所有组件深度状态
 openclaw channels status --probe    # Channel 连接探测
 openclaw agents list --bindings     # Agent 路由检查
 openclaw plugins list               # Plugin 加载状态
 openclaw plugins doctor             # Plugin 诊断
+openclaw update status              # 更新通道 + 最新稳定版
 ```
 
 ### 常见问题
@@ -289,6 +309,7 @@ openclaw plugins doctor             # Plugin 诊断
 | Node 连不上 | `tailscale status` + ping | 检查 Tailscale 状态 |
 | Skill 不加载 | `openclaw status --deep` | 检查 workspace 路径 |
 | Auth 失败 | `openclaw status --all` | `openclaw onboard` 重新配置 |
+| `2026.5.5` 后 Codex OAuth 路由异常 | `openclaw update status` | `openclaw models set openai-codex/gpt-5.5 && openclaw config validate` |
 | npm EACCES (Linux) | `npm config get prefix` | `install-cli.sh` 安装到 `~/.openclaw` |
 | openclaw 命令找不到 | `which openclaw` | 检查 PATH |
 | WSL portproxy 失效 | `netsh interface portproxy show all` | WSL IP 变化后需重新配置 |
@@ -332,4 +353,3 @@ jq '{gateway: .gateway, agents: [.agents.list[] | {id,name,model}]}' ~/.openclaw
 | **系统性诊断** | `references/diagnose-runbook.md` | 5 步方法论分析 + 结构化报告 + 故障模式沉淀 |
 | **配置验证** | `references/lint-config-runbook.md` | 验证 openclaw.json 语法/安全/路径/Auth |
 | **状态仪表盘** | `references/status-runbook.md` | 分层状态查询 (FSFR) + 降级策略 + 格式化输出 |
-

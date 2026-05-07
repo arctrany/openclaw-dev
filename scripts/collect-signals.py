@@ -153,22 +153,31 @@ def collect_remote(host: str, agents: list, days: int) -> dict:
         return {}
 
 
+def parse_openclaw_version(raw: str) -> str | None:
+    """Extract the semantic/date version from `openclaw --version` output."""
+    parts = raw.strip().split()
+    for token in parts:
+        if token[:1].isdigit():
+            return token
+    return None
+
+
 def collect_openclaw_version() -> dict:
-    """Detect installed OpenClaw version and latest release."""
+    """Detect installed OpenClaw version and latest stable release."""
     local_version = None
     latest_version = None
 
     try:
         r = subprocess.run(["openclaw", "--version"], capture_output=True, text=True, timeout=10)
         if r.returncode == 0:
-            local_version = r.stdout.strip().split()[-1]
+            local_version = parse_openclaw_version(r.stdout)
     except (FileNotFoundError, subprocess.TimeoutExpired):
         pass
 
     release_notes = None
     try:
         r = subprocess.run(
-            ["gh", "release", "view", "--repo", "clawdbot/openclaw",
+            ["gh", "release", "view", "--repo", "openclaw/openclaw",
              "--json", "tagName,body,publishedAt"],
             capture_output=True, text=True, timeout=15
         )
@@ -219,7 +228,7 @@ def main():
 
     agents = list(AGENT_ROOTS.keys()) if args.agent == "all" else args.agent.split(",")
 
-    print(f"[collect-signals] agents={agents} days={args.days} hosts={args.host}")
+    print(f"[collect-signals] agents={agents} days={args.days} hosts={args.host}", file=sys.stderr)
 
     signals = collect_local(agents, args.days)
     signals.setdefault("sources", [])
@@ -241,7 +250,7 @@ def main():
         out = Path(args.output)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(signals, indent=2, ensure_ascii=False))
-        print(f"[collect-signals] Written → {out}")
+        print(f"[collect-signals] Written → {out}", file=sys.stderr)
 
 
 if __name__ == "__main__":

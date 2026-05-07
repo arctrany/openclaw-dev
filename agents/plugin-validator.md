@@ -36,7 +36,8 @@ Validate both:
    - File exists at plugin root
    - Valid JSON format
    - Required fields: `id` (string, kebab-case), `configSchema` (valid inline JSON Schema object)
-   - Optional fields: `name`, `description`, `version`, `channels`, `providers`, `skills`, `uiHints`
+   - Optional fields often include `name`, `description`, `version`, `channels`, `providers`, `skills`, `uiHints`, `setup`, `modelSupport`, `contracts`, `qaRunners`, `activation`
+   - Prefer current capability-model metadata over legacy provider-only metadata
    - If `uiHints` exists, check keys match `configSchema.properties` when applicable
 
 3. **Bundle Validation**:
@@ -134,7 +135,7 @@ Validate both:
 
 **INFO** (suggestions):
 - Could enrich `uiHints` for better Gateway UI experience
-- Could add provider/channel metadata for better discovery
+- Could add capability metadata (`setup`, `contracts`, `modelSupport`, `qaRunners`) for better discovery
 - Additional `api.register*` capabilities available
 
 **When to Complete:**
