@@ -27,10 +27,11 @@ ssh -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 <your-username>@$GATEWAY_IP
 
 # 4. 检查 OpenClaw 状态
 openclaw status
-openclaw doctor
+openclaw doctor   # 默认只诊断
 
 # 5. 执行任务
-openclaw update
+openclaw update status
+openclaw update --dry-run
 openclaw models list
 
 # 6. 退出
@@ -108,11 +109,20 @@ tail -n 120 /tmp/openclaw-gateway.log
 
 ```bash
 # 远程
-sudo npm i -g openclaw@latest
+openclaw update status
+openclaw update --dry-run
+openclaw update --yes --no-restart
 openclaw --version
 
-# 重启 Gateway 使更新生效
+# 如需让托管 Gateway 进程切到新版本，再安排重启窗口
 pkill -TERM openclaw-gateway
+```
+
+如果 `2026.5.5` 的 `doctor --fix` 误把默认 Codex OAuth 路由改成 `openai/*`，先恢复：
+
+```bash
+openclaw models set openai-codex/gpt-5.5
+openclaw config validate
 ```
 
 ### 批量部署 Skills 到远程

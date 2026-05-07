@@ -21,6 +21,15 @@ Treat these files as the routing source of truth:
 
 Do not patch many docs first. Update policy + alias map, validate, then update docs if needed.
 
+## Runtime Safety Note
+
+Treat runtime rewrites separately from policy changes. If a repair/update step rewrites a valid `openai-codex/*` route to `openai/*`, do not "fix" the policy files to match the bad runtime state. Restore the runtime route first:
+
+```bash
+openclaw models set openai-codex/gpt-5.5
+openclaw config validate
+```
+
 ## Step-by-Step Procedure
 
 ### 1) Update aliases (if rename)
@@ -92,6 +101,7 @@ Smoke tests should at minimum cover:
 
 If integrated with OpenClaw:
 - verify `openclaw models list` auth/availability
+- if Codex OAuth was recently repaired or upgraded, restore `openai-codex/gpt-5.5` before route validation if the default route drifted
 - run one real route in each affected agent
 - confirm fallback behavior if primary fails
 

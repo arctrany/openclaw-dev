@@ -94,7 +94,8 @@ openclaw onboard --install-daemon
 ```bash
 openclaw health
 openclaw status --deep
-openclaw doctor
+openclaw doctor        # 只读诊断；确认后再决定是否加 --fix
+openclaw update status
 ```
 
 ### 5. 首次体验 (WebChat)

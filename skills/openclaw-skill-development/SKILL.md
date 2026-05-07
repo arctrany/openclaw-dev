@@ -18,7 +18,7 @@ Follow this process for every OpenClaw skill development task. No shortcuts.
 >
 > ⛔ **铁律: 遇到问题先跑 `openclaw doctor`**
 > - Skill 不加载、Gateway 不启动、部署失败 — 先运行 `openclaw doctor`
-> - doctor 会自动检测并修复常见问题，输出结果后再决定下一步
+> - `openclaw doctor` 默认只做诊断；只有 `--fix` / `--repair` 才会改配置或状态。先看输出，再决定是否应用修复
 
 ## Architecture Overview
 
@@ -428,4 +428,3 @@ For detailed patterns and techniques, consult the reference files and examples a
 ## Skill 清单查询
 
 需要查看当前已安装的所有 skill（workspace 级 + managed 级 + bundled 级）时，读取 `references/list-skills-runbook.md`。
-

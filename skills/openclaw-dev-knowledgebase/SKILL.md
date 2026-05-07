@@ -16,7 +16,7 @@ OpenClaw 全面知识库 — 功能/架构/开发/部署/运维 + plugin API + a
 > - 迁移 workspace 时必须完整保留 `memory/` 和 `MEMORY.md`
 >
 > ⛔ **铁律: 遇到问题先跑 `openclaw doctor`**
-> - 任何异常先运行 `openclaw doctor`，它会自动检测并修复常见问题
+> - 任何异常先运行 `openclaw doctor`；默认只诊断，只有 `--fix` / `--repair` 才会改配置或状态
 >
 > ⛔ **铁律: 零硬编码（组织铁律 #1）**
 > - Skill 文件内禁止写死：路径（`/Users/`、`/Volumes/`）、邮箱、IP:Port、API Key、模型名
@@ -103,6 +103,7 @@ Gateway (控制面, 单进程)
 openclaw health
 openclaw status --deep --all
 openclaw doctor
+openclaw update status
 
 # Agents
 openclaw agents list --bindings
@@ -118,6 +119,8 @@ openclaw plugins list
 openclaw gateway install
 openclaw gateway start | stop | restart
 ```
+
+> `2026.5.6` 修复了 `2026.5.5` 中 `doctor --fix` 可能把 `openai-codex/*` 路由错误改写成 `openai/*` 的回归。遇到这类配置漂移，先运行 `openclaw models set openai-codex/gpt-5.5 && openclaw config validate`，再继续排障。
 
 ## 安装
 
