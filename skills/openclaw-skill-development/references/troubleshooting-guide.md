@@ -33,6 +33,7 @@ cat ~/.openclaw/agents/<agent-id>/sessions/sessions.json | jq '.["agent:<agent-i
 2. **Session not refreshed**
    - Skills load during session creation, not real-time
    - Fix: Send `/new` to agent via messaging platform
+   - On OpenClaw 2026.5.7+, `/new` and `sessions.reset` also clear cached `skillsSnapshot`; on older versions, stale skill lists may require an upgrade before retesting
 
 3. **Skill name mismatch**
    - Frontmatter `name:` must match directory name exactly

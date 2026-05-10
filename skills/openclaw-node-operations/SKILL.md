@@ -18,7 +18,7 @@ version: 3.0.0
 >
 > ⛔ **铁律: 遇到问题先跑 `openclaw doctor`**
 > - 任何异常（Gateway 不启动、Agent 不响应、Skill 不加载、Channel 断连）先运行 `openclaw doctor`
-> - doctor 会自动检测并修复常见问题，输出结果后再决定下一步
+> - `openclaw doctor` 默认是只读诊断；先审阅输出，再决定是否执行 `openclaw doctor --fix` / `--repair`
 
 ## 安装
 
@@ -116,6 +116,13 @@ open http://127.0.0.1:18789/    # macOS
 # 这证明: Gateway ✅ Model ✅ Auth ✅ Agent ✅
 ```
 
+若准备启用 owner-only 命令（`/diagnostics`、`/config`、exec 审批等），在接入第一个持久 channel 后立即绑定操作员身份：
+
+```bash
+openclaw config set commands.ownerAllowFrom '["telegram:<your-user-id>"]'
+openclaw gateway restart
+```
+
 ## 快速体验 (5 分钟)
 
 最快路径 — 从零到跟 Agent 对话：
@@ -166,7 +173,7 @@ openclaw gateway status      # 状态
 # 健康检查
 openclaw health              # 基础健康
 openclaw status --deep       # 深度状态
-openclaw doctor              # 诊断修复
+openclaw doctor              # 只读诊断；确认后再用 --fix/--repair
 ```
 
 ### 多 Gateway (同一机器)
@@ -271,7 +278,7 @@ export OPENCLAW_SSH_PORT=22
 ### 常用诊断命令
 
 ```bash
-openclaw doctor                     # 自动诊断 + 修复
+openclaw doctor                     # 只读诊断；确认后再用 --fix/--repair
 openclaw health                     # Gateway 健康
 openclaw status --deep --all        # 所有组件深度状态
 openclaw channels status --probe    # Channel 连接探测
@@ -332,4 +339,3 @@ jq '{gateway: .gateway, agents: [.agents.list[] | {id,name,model}]}' ~/.openclaw
 | **系统性诊断** | `references/diagnose-runbook.md` | 5 步方法论分析 + 结构化报告 + 故障模式沉淀 |
 | **配置验证** | `references/lint-config-runbook.md` | 验证 openclaw.json 语法/安全/路径/Auth |
 | **状态仪表盘** | `references/status-runbook.md` | 分层状态查询 (FSFR) + 降级策略 + 格式化输出 |
-
