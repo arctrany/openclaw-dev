@@ -94,7 +94,7 @@ openclaw onboard --install-daemon
 ```bash
 openclaw health
 openclaw status --deep
-openclaw doctor
+openclaw doctor   # 只读诊断；确认后再用 --fix/--repair
 ```
 
 ### 5. 首次体验 (WebChat)
@@ -125,6 +125,9 @@ open http://127.0.0.1:18789/    # macOS
 openclaw channels add telegram --token "<your-bot-token>"
 # 3. 验证:
 openclaw channels status --probe
+# 4. 推荐：绑定 owner-only 命令的操作者账号
+openclaw config set commands.ownerAllowFrom '["telegram:<your-user-id>"]'
+openclaw gateway restart
 ```
 
 ### 7. 可选：网络配置

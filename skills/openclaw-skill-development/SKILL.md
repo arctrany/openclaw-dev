@@ -18,7 +18,7 @@ Follow this process for every OpenClaw skill development task. No shortcuts.
 >
 > ⛔ **铁律: 遇到问题先跑 `openclaw doctor`**
 > - Skill 不加载、Gateway 不启动、部署失败 — 先运行 `openclaw doctor`
-> - doctor 会自动检测并修复常见问题，输出结果后再决定下一步
+> - `openclaw doctor` 默认是只读诊断；确认修复动作后再运行 `openclaw doctor --fix` / `--repair`
 
 ## Architecture Overview
 
@@ -227,7 +227,7 @@ sleep 3
 
 ### Trigger new session
 
-Send `/new` to the agent via its messaging platform (Telegram, Discord, etc.). This creates a fresh session that re-resolves skills from the workspace.
+Send `/new` to the agent via its messaging platform (Telegram, Discord, etc.). This creates a fresh session that re-resolves skills from the workspace. On OpenClaw 2026.5.7+, `/new` and `sessions.reset` also clear the cached `skillsSnapshot`, so visible skill lists refresh reliably after skill changes.
 
 ### Verify skills loaded
 
@@ -276,7 +276,7 @@ for line in sys.stdin:
 | Skill in wrong directory | Not loaded in session | Verify agent's `workspace` in openclaw.json, put skill in `<workspace>/skills/` |
 | Skill in shared workspace | Affects all agents | Use per-agent workspace via `agents.list[].workspace` |
 | Gateway not restarted | Old session, old skills | `pkill -TERM openclaw-gateway`, wait for auto-restart |
-| Session not refreshed | Skills in config but not in prompt | Send `/new` to agent to create fresh session |
+| Session not refreshed | Skills in config but not in prompt | Send `/new` to agent to create fresh session; on 2026.5.7+ this also clears cached `skillsSnapshot` |
 | `metadata` not valid JSON | Skill loads but flags ignored | Test with `echo '<metadata>' \| jq .` |
 | Description too vague | Skill never triggers | Include specific trigger phrases and contexts |
 | Body too long | Context bloat | Move details to `references/` files, keep body < 500 lines |
@@ -428,4 +428,3 @@ For detailed patterns and techniques, consult the reference files and examples a
 ## Skill 清单查询
 
 需要查看当前已安装的所有 skill（workspace 级 + managed 级 + bundled 级）时，读取 `references/list-skills-runbook.md`。
-

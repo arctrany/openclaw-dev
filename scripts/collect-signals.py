@@ -6,7 +6,7 @@ Usage:
                                       [--host user@host] [--days 30] [--issues]
                                       [--output data/signals.json]
 """
-import argparse, json, os, subprocess, sys
+import argparse, json, os, re, subprocess, sys, urllib.request
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -161,26 +161,43 @@ def collect_openclaw_version() -> dict:
     try:
         r = subprocess.run(["openclaw", "--version"], capture_output=True, text=True, timeout=10)
         if r.returncode == 0:
-            local_version = r.stdout.strip().split()[-1]
+            match = re.search(r"OpenClaw\s+([0-9][0-9A-Za-z.\-+]*)", r.stdout)
+            if match:
+                local_version = match.group(1)
     except (FileNotFoundError, subprocess.TimeoutExpired):
         pass
 
     release_notes = None
     try:
-        r = subprocess.run(
-            ["gh", "release", "view", "--repo", "clawdbot/openclaw",
-             "--json", "tagName,body,publishedAt"],
-            capture_output=True, text=True, timeout=15
+        req = urllib.request.Request(
+            "https://api.github.com/repos/openclaw/openclaw/releases/latest",
+            headers={"Accept": "application/vnd.github+json"},
         )
-        if r.returncode == 0:
-            data = json.loads(r.stdout)
-            latest_version = data.get("tagName", "").lstrip("v")
-            release_notes = {
-                "body": data.get("body", ""),
-                "published_at": data.get("publishedAt", ""),
-            }
-    except (FileNotFoundError, subprocess.TimeoutExpired, json.JSONDecodeError):
-        pass
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.load(resp)
+        latest_version = (data.get("tag_name") or "").lstrip("v") or None
+        release_notes = {
+            "body": data.get("body", ""),
+            "published_at": data.get("published_at", ""),
+            "url": data.get("html_url", ""),
+        }
+    except Exception:
+        try:
+            r = subprocess.run(
+                ["gh", "release", "view", "--repo", "openclaw/openclaw",
+                 "--json", "tagName,body,publishedAt,url"],
+                capture_output=True, text=True, timeout=15
+            )
+            if r.returncode == 0:
+                data = json.loads(r.stdout)
+                latest_version = data.get("tagName", "").lstrip("v") or None
+                release_notes = {
+                    "body": data.get("body", ""),
+                    "published_at": data.get("publishedAt", ""),
+                    "url": data.get("url", ""),
+                }
+        except (FileNotFoundError, subprocess.TimeoutExpired, json.JSONDecodeError):
+            pass
 
     return {
         "local_version": local_version,

@@ -66,14 +66,28 @@ netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=18789 conn
 ### 诊断命令
 
 ```bash
-openclaw doctor                     # 自动诊断 + 修复
+openclaw doctor                     # 只读诊断；确认后再用 --fix/--repair
 openclaw health                     # Gateway 健康
 openclaw status --deep --all        # 深度状态
 openclaw channels status --probe    # Channel 探测
 openclaw agents list --bindings     # Agent 路由
 openclaw plugins list               # Plugin 状态
 openclaw plugins doctor             # Plugin 诊断
+openclaw update status              # 安装来源 + 更新状态
 ```
+
+### 更新
+
+```bash
+openclaw update status
+openclaw update --dry-run --yes
+openclaw update --yes --no-restart
+openclaw --version
+```
+
+- 先看 `openclaw update status`，确认安装来源和目标版本
+- `--dry-run` 只预览动作，不写配置、不重启服务
+- `--no-restart` 适合先升级 CLI，再按维护窗口手动重启 gateway
 
 ### 常见问题
 

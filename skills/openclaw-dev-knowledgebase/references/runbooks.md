@@ -30,7 +30,9 @@ openclaw status
 openclaw doctor
 
 # 5. 执行任务
-openclaw update
+openclaw update status
+openclaw update --dry-run --yes
+openclaw update --yes --no-restart
 openclaw models list
 
 # 6. 退出
@@ -64,13 +66,13 @@ scp -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 \
 |------|------|
 | 连接超时 | 确认本地 Tailscale 在线 + 同一 Tailnet + SSH 服务运行 |
 | 权限不足 | 把完整报错发管理员申请授权 |
-| `openclaw` 找不到 | 先 `openclaw doctor`；仍失败联系管理员检查安装与 PATH |
+| `openclaw` 找不到 | 先确认 PATH，再运行 `openclaw doctor` 查看诊断；仍失败联系管理员检查安装 |
 
 ### 每次登录顺序
 
 1. 连上 Tailscale
 2. `ssh` 登录
-3. `openclaw doctor`
+3. `openclaw doctor`（只读）
 4. 执行任务
 5. `exit` 退出
 
@@ -108,11 +110,13 @@ tail -n 120 /tmp/openclaw-gateway.log
 
 ```bash
 # 远程
-sudo npm i -g openclaw@latest
+openclaw update status
+openclaw update --dry-run --yes
+openclaw update --yes --no-restart
 openclaw --version
 
-# 重启 Gateway 使更新生效
-pkill -TERM openclaw-gateway
+# 需要切换正在运行的 gateway 时，再按维护窗口执行
+openclaw gateway restart
 ```
 
 ### 批量部署 Skills 到远程
@@ -124,6 +128,7 @@ rsync -avz --exclude 'memory/' --exclude 'MEMORY.md' \
   skills/ <your-username>@$GATEWAY_IP:~/.openclaw/workspace/skills/
 
 # 然后 SSH 进去发 /new 给 agent，或重启 gateway
+# 2026.5.7+ 的 /new 会清掉缓存的 skillsSnapshot，适合验证技能更新
 ```
 
 ---

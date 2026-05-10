@@ -88,6 +88,7 @@ workspace/
 - 决策/偏好/持久事实 → `MEMORY.md`
 - 日常笔记/上下文 → `memory/YYYY-MM-DD.md`
 - Session 开始自动读 today + yesterday
+- 全局 Active Memory 开关属于管理员操作；2026.5.7+ 需要 admin/owner scope 再执行
 
 ### 自动 flush
 
@@ -208,6 +209,7 @@ openclaw security audit --fix    # 自动修复
 {
   gateway: { mode: "local", bind: "loopback",
     auth: { mode: "token", token: "long-random-token" } },
+  commands: { ownerAllowFrom: ["telegram:<your-user-id>"] },
   session: { dmScope: "per-channel-peer" },
   tools: {
     profile: "messaging",

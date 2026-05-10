@@ -16,7 +16,8 @@ OpenClaw 全面知识库 — 功能/架构/开发/部署/运维 + plugin API + a
 > - 迁移 workspace 时必须完整保留 `memory/` 和 `MEMORY.md`
 >
 > ⛔ **铁律: 遇到问题先跑 `openclaw doctor`**
-> - 任何异常先运行 `openclaw doctor`，它会自动检测并修复常见问题
+> - 任何异常先运行 `openclaw doctor`
+> - `openclaw doctor` 默认是只读诊断；确认修复动作后再运行 `openclaw doctor --fix` / `--repair`
 >
 > ⛔ **铁律: 零硬编码（组织铁律 #1）**
 > - Skill 文件内禁止写死：路径（`/Users/`、`/Volumes/`）、邮箱、IP:Port、API Key、模型名
@@ -103,6 +104,7 @@ Gateway (控制面, 单进程)
 openclaw health
 openclaw status --deep --all
 openclaw doctor
+openclaw update status
 
 # Agents
 openclaw agents list --bindings
@@ -110,6 +112,7 @@ jq '.agents.list[] | {id, model, workspace}' ~/.openclaw/openclaw.json
 
 # Channels
 openclaw channels status --probe
+openclaw models auth list
 
 # Plugins
 openclaw plugins list
